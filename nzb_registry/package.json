@@ -1,0 +1,30 @@
+{
+  "name": "nzb_registry",
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "NODE_ENV=production webpack build",
+    "watch": "NODE_ENV=development webpack watch"
+  },
+  "prettier": "@matthis/prettier-config",
+  "eslintConfig": {
+    "extends": [
+      "@matthis/eslint-config-node"
+    ],
+    "rules": {
+      "no-console": "off"
+    }
+  },
+  "devDependencies": {
+    "@matthis/eslint-config-node": "latest",
+    "@matthis/prettier-config": "latest",
+    "@matthis/tsconfig-node": "latest",
+    "@matthis/webpack-lambda": "latest",
+    "@types/node": "16.11.x",
+    "@types/request": "^2.48.8"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.82.0",
+    "@aws-sdk/lib-dynamodb": "^3.82.0",
+    "request": "^2.88.2"
+  }
+}

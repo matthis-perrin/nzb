@@ -1,0 +1,8 @@
+{
+  "name": "nzb",
+  "license": "UNLICENSED",
+  "scripts": {
+    "setup": "node ./setup.js",
+    "deploy": "node ./deploy.js"
+  }
+}
