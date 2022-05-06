@@ -6,7 +6,7 @@ import {
   UpdateCommand,
 } from '@aws-sdk/lib-dynamodb';
 
-import {NzbsuRegistryItem} from './models';
+import {NzbsuRegistryItem} from '../../shared/models';
 import {asMapArrayOrThrow} from './type_utils';
 
 const dynamoDb = DynamoDBDocumentClient.from(new DynamoDBClient({region: 'eu-west-3'}), {

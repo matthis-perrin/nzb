@@ -1,6 +1,6 @@
 import request from 'request';
 
-import {NzbsuRegistryItem} from './models';
+import {NzbsuRegistryItem} from '../../shared/models';
 import {asMapArrayOrThrow, asMapOrThrow, asString, asStringOrThrow} from './type_utils';
 
 const NZBSU_API_KEY = 'b8a81e890c29ccfda224075f1f8bd3aa';

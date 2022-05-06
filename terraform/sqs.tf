@@ -1,5 +1,5 @@
 resource "aws_sqs_queue" "nzb_to_check_queue" {
-    name_prefix = "NzbToCheck-"
+    name = "NzbToCheck"
 }
 
 resource "aws_lambda_event_source_mapping" "nzb_checker_trigger" {

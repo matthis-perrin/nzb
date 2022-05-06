@@ -1,3 +1,6 @@
+import {GetQueueUrlCommand, SendMessageBatchCommand, SQSClient} from '@aws-sdk/client-sqs';
+
+import {NzbsuRegistryItem} from '../../shared/models';
 import {
   getLastNzbsuRegistryItems,
   insertNzbsuRegistryItems,
@@ -5,7 +8,6 @@ import {
   // updateNzbsuRegistryItemsWithImdbInfo,
 } from './dynamo';
 import {imdbSearch, parseImdbSearch} from './imdb';
-import {NzbsuRegistryItem} from './models';
 import {nzbsuGetJson, parseNzbsuRegistryItems} from './nzbsu';
 
 async function fetchNzbsuRegistryItemsUntilGuid(guid: string): Promise<NzbsuRegistryItem[]> {
@@ -37,6 +39,8 @@ async function fetchNzbsuRegistryItemsUntilGuid(guid: string): Promise<NzbsuRegi
   return allItems;
 }
 
+const sqs = new SQSClient({region: 'eu-west-3'});
+
 export async function handler(): Promise<void> {
   const lastItem = await getLastNzbsuRegistryItems();
   console.log(`Last item: ${lastItem.guid}`);
@@ -51,17 +55,37 @@ export async function handler(): Promise<void> {
       try {
         const imdbInfo = parseImdbSearch(await imdbSearch(item.title));
         if (!imdbInfo) {
-          console.log('no match');
+          console.log('no match for ', item.title);
           return {...item, imdbId: 'no_match', imdbTitle: ''};
         }
         console.log(`match "${imdbInfo.title}" (${imdbInfo.id})`);
         return {...item, imdbId: imdbInfo.id, imdbTitle: imdbInfo.title};
-      } catch {
+      } catch (err: unknown) {
+        console.log(err);
         return item;
       }
     })
   );
-  await insertNzbsuRegistryItems(itemsWithImdb.reverse());
+  const items = itemsWithImdb.reverse();
+  await insertNzbsuRegistryItems(items);
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, unicorn/no-await-expression-member
+    const queueUrl = (await sqs.send(new GetQueueUrlCommand({QueueName: 'NzbToCheck'}))).QueueUrl!;
+    await sqs.send(
+      new SendMessageBatchCommand({
+        QueueUrl: queueUrl,
+        Entries: items.map(item => ({
+          // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+          Id: Math.random().toString(36).slice(2),
+          MessageBody: item.guid,
+        })),
+      })
+    );
+  } catch (err: unknown) {
+    console.log('Failure while sending to SQS');
+    console.log(JSON.stringify(items, undefined, 2));
+    throw err;
+  }
   console.log('Done');
 }
 
