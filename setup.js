@@ -53,6 +53,7 @@ async function installNodeModulesAtPath(path) {
 
 async function installNodeModules() {
   await installNodeModulesAtPath(path.join(process.cwd(), 'nzb_registry'));
+  await installNodeModulesAtPath(path.join(process.cwd(), 'nzb_checker'));
 }
 
 async function run() {

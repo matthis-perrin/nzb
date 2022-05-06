@@ -50,6 +50,8 @@ function terraformOutputs() {
 
 const nzb_registryPath = path.join(process.cwd(), 'nzb_registry');
 const nzb_registryDist = path.join(nzb_registryPath, 'dist');
+const nzb_checkerPath = path.join(process.cwd(), 'nzb_checker');
+const nzb_checkerDist = path.join(nzb_checkerPath, 'dist');
 
 async function buildStandaloneLambda_nzb_registry(outputs) {
   runCommand({command: 'rm -rf dist', cwd: nzb_registryPath});
@@ -63,13 +65,31 @@ async function buildStandaloneLambda_nzb_registry(outputs) {
   });
 }
 
+async function buildStandaloneLambda_nzb_checker(outputs) {
+  runCommand({command: 'rm -rf dist', cwd: nzb_checkerPath});
+  runCommand({
+    command: `yarn build`,
+    cwd: nzb_checkerPath,
+  });
+  runCommand({
+    command: `yarn install --modules-folder dist/node_modules --production --no-bin-links`,
+    cwd: nzb_checkerPath,
+  });
+}
+
 async function buildWorkspace(outputs) {
-  await Promise.all([buildStandaloneLambda_nzb_registry(outputs)]);
+  await Promise.all([
+    buildStandaloneLambda_nzb_registry(outputs),
+    buildStandaloneLambda_nzb_checker(outputs),
+  ]);
 }
 
 async function run() {
   // Initialize if needed and get terraform outputs
-  ensureDistFolders([{dist: nzb_registryDist, isLambda: true}]);
+  ensureDistFolders([
+    {dist: nzb_registryDist, isLambda: true},
+    {dist: nzb_checkerDist, isLambda: true},
+  ]);
   let outputs = terraformOutputs();
   if (Object.keys(outputs).length === 0) {
     checkTerraformCredentials();
