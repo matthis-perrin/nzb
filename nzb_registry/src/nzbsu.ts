@@ -1,7 +1,13 @@
 import request from 'request';
 
 import {NzbsuRegistryItem} from '../../shared/models';
-import {asMapArrayOrThrow, asMapOrThrow, asString, asStringOrThrow} from './type_utils';
+import {
+  asMapArrayOrThrow,
+  asMapOrThrow,
+  asNumberOrThrow,
+  asString,
+  asStringOrThrow,
+} from './type_utils';
 
 const NZBSU_API_KEY = 'b8a81e890c29ccfda224075f1f8bd3aa';
 
@@ -40,6 +46,7 @@ export function parseNzbsuRegistryItems(res: unknown): NzbsuRegistryItem[] {
       return {
         guid: asStringOrThrow(attrs['guid']),
         title: asStringOrThrow(item['title']),
+        size: asNumberOrThrow(attrs['size']),
         pubTs: new Date(asStringOrThrow(item['pubDate'])).getTime(),
         imdbId: `tt${asString(attrs['imdb'], '0000000')}`,
         imdbTitle: asString(attrs['imdbtitle']),

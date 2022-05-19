@@ -7,6 +7,10 @@ data "aws_iam_policy_document" "lambda_nzb_registry_extra_role" {
       "arn:aws:dynamodb:eu-west-3:*:table/NzbRegistry/index/*",
     ]
   }
+  statement {
+    actions   = ["sqs:*"]
+    resources = ["arn:aws:sqs:eu-west-3:*:NzbToCheck"]
+  }
 }
 
 resource "aws_lambda_function" "nzb_registry" {
@@ -16,6 +20,7 @@ resource "aws_lambda_function" "nzb_registry" {
   source_code_hash  = data.archive_file.nzb_registry_archive.output_sha
   handler           = "main.handler"
   runtime           = "nodejs14.x"
+  timeout           = 30
   role              = aws_iam_role.lambda_nzb_registry_exec.arn
 }
 

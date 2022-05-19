@@ -2,14 +2,15 @@ import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
 import {
   BatchWriteCommand,
   DynamoDBDocumentClient,
+  GetCommand,
   QueryCommand,
   UpdateCommand,
 } from '@aws-sdk/lib-dynamodb';
 
-import {NzbsuRegistryItem} from '../../shared/models';
+import {ImdbNzbInfo, NzbsuRegistryItem} from '../../shared/models';
 import {asMapArrayOrThrow} from './type_utils';
 
-const dynamoDb = DynamoDBDocumentClient.from(new DynamoDBClient({region: 'eu-west-3'}), {
+export const dynamoDb = DynamoDBDocumentClient.from(new DynamoDBClient({region: 'eu-west-3'}), {
   marshallOptions: {removeUndefinedValues: true},
 });
 
@@ -36,7 +37,17 @@ export async function insertNzbsuRegistryItems(items: NzbsuRegistryItem[]): Prom
   }
 }
 
-export async function getLastNzbsuRegistryItems(): Promise<NzbsuRegistryItem> {
+export async function getNzbsuRegistryItem(guid: string): Promise<NzbsuRegistryItem | undefined> {
+  const res = await dynamoDb.send(
+    new GetCommand({
+      TableName: 'NzbRegistry',
+      Key: {guid},
+    })
+  );
+  return res.Item as NzbsuRegistryItem | undefined;
+}
+
+export async function getLastNzbsuRegistryItem(): Promise<NzbsuRegistryItem> {
   const res = await dynamoDb.send(
     new QueryCommand({
       TableName: 'NzbRegistry',
@@ -52,15 +63,37 @@ export async function getLastNzbsuRegistryItems(): Promise<NzbsuRegistryItem> {
   return asMapArrayOrThrow(res.Items)[0]! as NzbsuRegistryItem;
 }
 
-export async function queryNzbsuRegistryItemsWithoutImdb(): Promise<NzbsuRegistryItem[]> {
+export async function queryNzbsuRegistryItemsByImdb(
+  imdbId: string,
+  limit: number
+): Promise<NzbsuRegistryItem[]> {
   const res = await dynamoDb.send(
     new QueryCommand({
       TableName: 'NzbRegistry',
       IndexName: 'NzbRegistry_ByImdbId_SortedByPubTs',
       KeyConditions: {
-        imdbId: {ComparisonOperator: 'EQ', AttributeValueList: ['tt0000000']},
+        imdbId: {ComparisonOperator: 'EQ', AttributeValueList: [imdbId]},
       },
-      Limit: 10,
+      Limit: limit,
+      ScanIndexForward: false,
+    })
+  );
+  return asMapArrayOrThrow(res.Items) as NzbsuRegistryItem[];
+}
+
+export async function queryNzbsuRegistryItemsBeforePubTs(
+  pubTs: number,
+  limit: number
+): Promise<NzbsuRegistryItem[]> {
+  const res = await dynamoDb.send(
+    new QueryCommand({
+      TableName: 'NzbRegistry',
+      IndexName: 'NzbRegistry_All_SortedByPubTs',
+      KeyConditions: {
+        v: {ComparisonOperator: 'EQ', AttributeValueList: [VERSION]},
+        pubTs: {ComparisonOperator: 'LE', AttributeValueList: [pubTs]},
+      },
+      Limit: limit,
       ScanIndexForward: false,
     })
   );
@@ -85,4 +118,16 @@ export async function updateNzbsuRegistryItemsWithImdbInfo(
       },
     })
   );
+}
+
+export async function getImdbInfoItem(imdbId: string): Promise<ImdbNzbInfo | undefined> {
+  const res = await dynamoDb.send(
+    new GetCommand({
+      TableName: 'ImdbInfo',
+      Key: {
+        imdbId,
+      },
+    })
+  );
+  return res.Item as ImdbNzbInfo | undefined;
 }

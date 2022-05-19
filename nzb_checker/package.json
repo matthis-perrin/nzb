@@ -26,6 +26,7 @@
     "@aws-sdk/client-dynamodb": "^3.82.0",
     "@aws-sdk/client-sqs": "^3.85.0",
     "@aws-sdk/lib-dynamodb": "^3.82.0",
+    "@types/request": "^2.48.8",
     "request": "^2.88.2"
   }
 }

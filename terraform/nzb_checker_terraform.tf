@@ -5,11 +5,12 @@ data "aws_iam_policy_document" "lambda_nzb_checker_extra_role" {
     resources = [
       "arn:aws:dynamodb:eu-west-3:*:table/NzbRegistry",
       "arn:aws:dynamodb:eu-west-3:*:table/NzbRegistry/index/*",
+      "arn:aws:dynamodb:eu-west-3:*:table/ImdbInfo",
     ]
   }
   statement {
     actions   = ["sqs:*"]
-    resources = ["arn:aws:sqs:*"]
+    resources = ["arn:aws:sqs:eu-west-3:*:NzbToCheck"]
   }
 }
 
@@ -20,6 +21,7 @@ resource "aws_lambda_function" "nzb_checker" {
   source_code_hash  = data.archive_file.nzb_checker_archive.output_sha
   handler           = "main.handler"
   runtime           = "nodejs14.x"
+  timeout           = 30
   role              = aws_iam_role.lambda_nzb_checker_exec.arn
 }
 
