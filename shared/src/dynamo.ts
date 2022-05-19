@@ -3,18 +3,53 @@ import {
   BatchWriteCommand,
   DynamoDBDocumentClient,
   GetCommand,
+  PutCommand,
   QueryCommand,
   UpdateCommand,
 } from '@aws-sdk/lib-dynamodb';
 
-import {ImdbNzbInfo, NzbsuRegistryItem} from '../../shared/models';
+import {ImdbNzbInfo, NzbsuRegistryItem} from './models';
 import {asMapArrayOrThrow} from './type_utils';
 
-export const dynamoDb = DynamoDBDocumentClient.from(new DynamoDBClient({region: 'eu-west-3'}), {
+const dynamoDb = DynamoDBDocumentClient.from(new DynamoDBClient({region: 'eu-west-3'}), {
   marshallOptions: {removeUndefinedValues: true},
 });
 
 const VERSION = '0';
+
+export async function getNzbsuRegistryItem(guid: string): Promise<NzbsuRegistryItem | undefined> {
+  const res = await dynamoDb.send(
+    new GetCommand({
+      TableName: 'NzbRegistry',
+      Key: {guid},
+    })
+  );
+  return res.Item as NzbsuRegistryItem | undefined;
+}
+
+export async function getImdbInfoItem(imdbId: string): Promise<ImdbNzbInfo | undefined> {
+  const res = await dynamoDb.send(
+    new GetCommand({
+      TableName: 'ImdbInfo',
+      Key: {
+        imdbId,
+      },
+    })
+  );
+  return res.Item as ImdbNzbInfo | undefined;
+}
+
+export async function putImdbInfoItem(item: ImdbNzbInfo): Promise<void> {
+  await dynamoDb.send(
+    new PutCommand({
+      TableName: 'ImdbInfo',
+      Item: {
+        ...item,
+        v: VERSION,
+      },
+    })
+  );
+}
 
 export async function insertNzbsuRegistryItems(items: NzbsuRegistryItem[]): Promise<void> {
   const MAX_PER_BATCH = 25;
@@ -35,16 +70,6 @@ export async function insertNzbsuRegistryItems(items: NzbsuRegistryItem[]): Prom
       })
     );
   }
-}
-
-export async function getNzbsuRegistryItem(guid: string): Promise<NzbsuRegistryItem | undefined> {
-  const res = await dynamoDb.send(
-    new GetCommand({
-      TableName: 'NzbRegistry',
-      Key: {guid},
-    })
-  );
-  return res.Item as NzbsuRegistryItem | undefined;
 }
 
 export async function getLastNzbsuRegistryItem(): Promise<NzbsuRegistryItem> {
@@ -118,16 +143,4 @@ export async function updateNzbsuRegistryItemsWithImdbInfo(
       },
     })
   );
-}
-
-export async function getImdbInfoItem(imdbId: string): Promise<ImdbNzbInfo | undefined> {
-  const res = await dynamoDb.send(
-    new GetCommand({
-      TableName: 'ImdbInfo',
-      Key: {
-        imdbId,
-      },
-    })
-  );
-  return res.Item as ImdbNzbInfo | undefined;
 }

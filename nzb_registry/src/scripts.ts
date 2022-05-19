@@ -1,53 +1,13 @@
-import {UpdateCommand} from '@aws-sdk/lib-dynamodb';
-
-import {NO_IMDB_MATCH_V3, UNKNOWN_IDS} from '../../shared/constant';
+import {NO_IMDB_MATCH_V3, UNKNOWN_IDS} from '../../shared/src/constant';
 import {
-  dynamoDb,
   getImdbInfoItem,
   getNzbsuRegistryItem,
   queryNzbsuRegistryItemsBeforePubTs,
   queryNzbsuRegistryItemsByImdb,
   updateNzbsuRegistryItemsWithImdbInfo,
-} from './dynamo';
-import {imdbSearch} from './imdb';
-import {nzbsuGetJson, parseNzbsuRegistryItems} from './nzbsu';
+} from '../../shared/src/dynamo';
+import {imdbSearch} from '../../shared/src/imdb';
 import {sendItems} from './sqs';
-
-export async function backFillSizesForNzbsuRegistryItems(): Promise<void> {
-  let offset = 0;
-
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
-    // eslint-disable-next-line no-await-in-loop
-    const res = await nzbsuGetJson({
-      t: 'movie',
-      cat: '2045',
-      offset,
-      attrs: ['guid', 'imdb', 'imdbtitle'].join(','),
-    });
-    const items = parseNzbsuRegistryItems(res);
-    offset += items.length;
-    if (items.length === 0) {
-      break;
-    }
-
-    for (const item of items) {
-      console.log(offset, item.guid, item.title);
-      // eslint-disable-next-line no-await-in-loop
-      await dynamoDb.send(
-        new UpdateCommand({
-          TableName: 'NzbRegistry',
-          Key: {guid: item.guid},
-          UpdateExpression: 'SET size = :size',
-          ExpressionAttributeValues: {
-            // eslint-disable-next-line @typescript-eslint/naming-convention
-            ':size': item.size,
-          },
-        })
-      );
-    }
-  }
-}
 
 export async function backFillImdbIds(id: string): Promise<void> {
   // eslint-disable-next-line no-constant-condition
@@ -80,6 +40,7 @@ export async function recheckNzbRegistryItems(): Promise<void> {
   if (lastProcessed === undefined) {
     throw new Error(`NzbRegistryItem with id "${LAST_PROCESSED}" not found`);
   }
+  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
   const beforeItems = await queryNzbsuRegistryItemsBeforePubTs(lastProcessed.pubTs, 50);
   const toCheck = beforeItems.slice(beforeItems.findIndex(i => i.guid === LAST_PROCESSED) + 1);
 

@@ -21,12 +21,10 @@
     "@matthis/tsconfig-node": "latest",
     "@matthis/webpack-lambda": "latest",
     "@types/node": "16.11.x",
-    "@types/request": "^2.48.8"
+    "@types/request": "2.48.x"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.82.0",
-    "@aws-sdk/client-sqs": "^3.85.0",
-    "@aws-sdk/lib-dynamodb": "^3.82.0",
-    "request": "^2.88.2"
+    "@aws-sdk/client-sqs": "3.85.x",
+    "request": "2.88.x"
   }
 }

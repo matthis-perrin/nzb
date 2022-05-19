@@ -1,13 +1,13 @@
 import request from 'request';
 
-import {NzbsuRegistryItem} from '../../shared/models';
+import {NzbsuRegistryItem} from '../../shared/src/models';
 import {
   asMapArrayOrThrow,
   asMapOrThrow,
   asNumberOrThrow,
   asString,
   asStringOrThrow,
-} from './type_utils';
+} from '../../shared/src/type_utils';
 
 const NZBSU_API_KEY = 'b8a81e890c29ccfda224075f1f8bd3aa';
 
@@ -17,7 +17,6 @@ export async function nzbsuGetJson(params: Record<string, string | number>): Pro
       {
         url: `https://api.nzb.su/api`,
         qs: {...params, o: 'json', apikey: NZBSU_API_KEY},
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         headers: {'User-Agent': 'nzb_registry'},
       },
       (err: unknown, resp, body: unknown) => {

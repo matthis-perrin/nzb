@@ -5,9 +5,9 @@ import {
   SQSClient,
 } from '@aws-sdk/client-sqs';
 
-import {UNKNOWN_IDS} from '../../shared/constant';
-import {getImdbInfoItem, getNzbsuRegistryItem, putImdbInfoItem} from './dynamo';
-import {imdbInfo, parseImdbInfo} from './imdb';
+import {UNKNOWN_IDS} from '../../shared/src/constant';
+import {getImdbInfoItem, getNzbsuRegistryItem, putImdbInfoItem} from '../../shared/src/dynamo';
+import {imdbInfo, parseImdbInfo} from '../../shared/src/imdb';
 
 interface SqsTriggerEvent {
   Records: {

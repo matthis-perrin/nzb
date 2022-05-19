@@ -1,9 +1,8 @@
-import {NO_IMDB_ID, NO_IMDB_MATCH_V2, NO_IMDB_MATCH_V3, UNKNOWN_IDS} from '../../shared/constant';
-import {NzbsuRegistryItem} from '../../shared/models';
-import {getLastNzbsuRegistryItem, insertNzbsuRegistryItems} from './dynamo';
-import {imdbSearch} from './imdb';
+import {NO_IMDB_ID, NO_IMDB_MATCH_V3, UNKNOWN_IDS} from '../../shared/src/constant';
+import {getLastNzbsuRegistryItem, insertNzbsuRegistryItems} from '../../shared/src/dynamo';
+import {imdbSearch} from '../../shared/src/imdb';
+import {NzbsuRegistryItem} from '../../shared/src/models';
 import {nzbsuGetJson, parseNzbsuRegistryItems} from './nzbsu';
-import {backFillImdbIds} from './scripts';
 import {sendItems} from './sqs';
 // import {backFillImdbIds, recurseFn} from './scripts';
 

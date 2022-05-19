@@ -7,6 +7,10 @@
     {
       "type": "standalone-lambda",
       "lambdaName": "nzb_checker"
+    },
+    {
+      "type": "standalone-lambda",
+      "lambdaName": "nzb_backfill"
     }
   ],
   "folders": [
@@ -15,6 +19,9 @@
     },
     {
       "path": "nzb_checker"
+    },
+    {
+      "path": "nzb_backfill"
     },
     {
       "path": "terraform"
@@ -31,6 +38,7 @@
     "files.exclude": {
       "nzb_registry": true,
       "nzb_checker": true,
+      "nzb_backfill": true,
       "shared": true,
       "terraform": true
     },

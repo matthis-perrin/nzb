@@ -1,5 +1,5 @@
 {
-  "name": "nzb_checker",
+  "name": "nzb_backfill",
   "license": "UNLICENSED",
   "scripts": {
     "build": "NODE_ENV=production webpack build",
