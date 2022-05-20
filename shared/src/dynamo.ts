@@ -5,11 +5,12 @@ import {
   GetCommand,
   PutCommand,
   QueryCommand,
+  ScanCommand,
   UpdateCommand,
 } from '@aws-sdk/lib-dynamodb';
 
 import {ImdbNzbInfo, NzbsuRegistryItem} from './models';
-import {asMapArrayOrThrow} from './type_utils';
+import {asMapArrayOrThrow, asStringOrThrow} from './type_utils';
 
 const dynamoDb = DynamoDBDocumentClient.from(new DynamoDBClient({region: 'eu-west-3'}), {
   marshallOptions: {removeUndefinedValues: true},
@@ -140,6 +141,31 @@ export async function updateNzbsuRegistryItemsWithImdbInfo(
         ':id': id,
         // eslint-disable-next-line @typescript-eslint/naming-convention
         ':title': title,
+      },
+    })
+  );
+}
+
+export async function getParameters(): Promise<Record<string, string>> {
+  const items = await dynamoDb.send(new ScanCommand({TableName: 'NzbParameters'}));
+  return Object.fromEntries(
+    (items.Items ?? []).map(item => [asStringOrThrow(item.key), asStringOrThrow(item.value)])
+  );
+}
+
+export async function setParameter(key: string, value: string): Promise<void> {
+  await dynamoDb.send(
+    new UpdateCommand({
+      TableName: 'NzbParameters',
+      Key: {key},
+      UpdateExpression: 'SET #value = :value',
+      ExpressionAttributeValues: {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        ':value': value,
+      },
+      ExpressionAttributeNames: {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        '#value': 'value',
       },
     })
   );

@@ -65,3 +65,14 @@ resource "aws_dynamodb_table" "imdb_info_table" {
     projection_type    = "ALL"
   }
 }
+
+resource "aws_dynamodb_table" "parameters_table" {
+  name           = "NzbParameters"
+  billing_mode   = "PAY_PER_REQUEST"
+  hash_key       = "key"
+
+  attribute {
+    name = "key"
+    type = "S"
+  }
+}

@@ -15,14 +15,15 @@ data "aws_iam_policy_document" "lambda_nzb_checker_extra_role" {
 }
 
 resource "aws_lambda_function" "nzb_checker" {
-  function_name     = "nzb_checker"
-  s3_bucket         = aws_s3_bucket.code.id
-  s3_key            = aws_s3_bucket_object.nzb_checker_archive.id
-  source_code_hash  = data.archive_file.nzb_checker_archive.output_sha
-  handler           = "main.handler"
-  runtime           = "nodejs14.x"
-  timeout           = 30
-  role              = aws_iam_role.lambda_nzb_checker_exec.arn
+  function_name                  = "nzb_checker"
+  s3_bucket                      = aws_s3_bucket.code.id
+  s3_key                         = aws_s3_bucket_object.nzb_checker_archive.id
+  source_code_hash               = data.archive_file.nzb_checker_archive.output_sha
+  handler                        = "main.handler"
+  runtime                        = "nodejs14.x"
+  timeout                        = 30
+  reserved_concurrent_executions = 1
+  role                           = aws_iam_role.lambda_nzb_checker_exec.arn
 }
 
 resource "aws_iam_role" "lambda_nzb_checker_exec" {

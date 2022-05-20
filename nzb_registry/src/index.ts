@@ -2,8 +2,8 @@ import {NO_IMDB_ID, NO_IMDB_MATCH_V3, UNKNOWN_IDS} from '../../shared/src/consta
 import {getLastNzbsuRegistryItem, insertNzbsuRegistryItems} from '../../shared/src/dynamo';
 import {imdbSearch} from '../../shared/src/imdb';
 import {NzbsuRegistryItem} from '../../shared/src/models';
+import {sendItems} from '../../shared/src/sqs';
 import {nzbsuGetJson, parseNzbsuRegistryItems} from './nzbsu';
-import {sendItems} from './sqs';
 // import {backFillImdbIds, recurseFn} from './scripts';
 
 async function fetchNzbsuRegistryItemsUntilGuid(guid: string): Promise<NzbsuRegistryItem[]> {

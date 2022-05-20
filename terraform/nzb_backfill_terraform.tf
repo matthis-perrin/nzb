@@ -6,6 +6,7 @@ data "aws_iam_policy_document" "lambda_nzb_backfill_extra_role" {
       "arn:aws:dynamodb:eu-west-3:*:table/NzbRegistry",
       "arn:aws:dynamodb:eu-west-3:*:table/NzbRegistry/index/*",
       "arn:aws:dynamodb:eu-west-3:*:table/ImdbInfo",
+      "arn:aws:dynamodb:eu-west-3:*:table/NzbParameters",
     ]
   }
   statement {
@@ -15,18 +16,19 @@ data "aws_iam_policy_document" "lambda_nzb_backfill_extra_role" {
 }
 
 resource "aws_lambda_function" "nzb_backfill" {
-  function_name     = "nzb_backfill-API"
-  s3_bucket         = aws_s3_bucket.code.id
-  s3_key            = aws_s3_bucket_object.nzb_backfill_archive.id
-  source_code_hash  = data.archive_file.nzb_backfill_archive.output_sha
-  handler           = "main.handler"
-  runtime           = "nodejs14.x"
-  timeout           = 15 * 60
-  role              = aws_iam_role.lambda_nzb_backfill_exec.arn
+  function_name                  = "nzb_backfill"
+  s3_bucket                      = aws_s3_bucket.code.id
+  s3_key                         = aws_s3_bucket_object.nzb_backfill_archive.id
+  source_code_hash               = data.archive_file.nzb_backfill_archive.output_sha
+  handler                        = "main.handler"
+  runtime                        = "nodejs14.x"
+  timeout                        = 15 * 60
+  reserved_concurrent_executions = 1
+  role                           = aws_iam_role.lambda_nzb_backfill_exec.arn
 }
 
 resource "aws_iam_role" "lambda_nzb_backfill_exec" {
-  name = "nzb_backfill-API-assume-role"
+  name = "nzb_backfill-assume-role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -42,7 +44,7 @@ resource "aws_iam_role" "lambda_nzb_backfill_exec" {
   })
 
   inline_policy {
-    name = "nzb_backfill-API-cloudwatch-role"
+    name = "nzb_backfill-cloudwatch-role"
     policy = jsonencode({
       Version = "2012-10-17"
       Statement = [
@@ -60,7 +62,7 @@ resource "aws_iam_role" "lambda_nzb_backfill_exec" {
   }
   
   inline_policy {
-    name = "nzb_backfill-API-extra-role"
+    name = "nzb_backfill-extra-role"
     policy = data.aws_iam_policy_document.lambda_nzb_backfill_extra_role.json
   }
 }

@@ -7,6 +7,7 @@ import {
   asMapArrayOrThrow,
   asMapOrThrow,
   asNumber,
+  asNumberOrThrow,
   asString,
   asStringOrThrow,
 } from './type_utils';
@@ -185,4 +186,25 @@ export function parseImdbInfo(res: unknown): ImdbInfo {
     backdrops,
     images,
   };
+}
+
+export async function apiCallLeft(): Promise<number> {
+  return new Promise<number>((resolve, reject) => {
+    const url = `https://imdb-api.com/en/API/Usage/${API_KEY}`;
+    request.get({url}, (err: unknown, resp, body: unknown) => {
+      // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+      if (err) {
+        reject(err);
+      } else {
+        if (resp.statusCode !== OK) {
+          console.log(url, body);
+          throw new Error(`API_FAILURE (${resp.statusCode})`);
+        }
+        const res = JSON.parse(asStringOrThrow(body));
+        const count = asNumberOrThrow(res.count);
+        const maximum = asNumberOrThrow(res.maximum);
+        resolve(maximum - count);
+      }
+    });
+  });
 }

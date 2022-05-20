@@ -24,7 +24,9 @@
     "@types/request": "2.48.x"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "3.82.x",
     "@aws-sdk/client-sqs": "3.85.x",
+    "@aws-sdk/lib-dynamodb": "3.82.x",
     "request": "2.88.x"
   }
 }
