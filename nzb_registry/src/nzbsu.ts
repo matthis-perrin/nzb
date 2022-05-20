@@ -1,5 +1,6 @@
 import request from 'request';
 
+import {NZBSU_API_KEY} from '../../shared/src/constant';
 import {NzbsuRegistryItem} from '../../shared/src/models';
 import {
   asMapArrayOrThrow,
@@ -8,8 +9,6 @@ import {
   asString,
   asStringOrThrow,
 } from '../../shared/src/type_utils';
-
-const NZBSU_API_KEY = 'b8a81e890c29ccfda224075f1f8bd3aa';
 
 export async function nzbsuGetJson(params: Record<string, string | number>): Promise<unknown> {
   return new Promise<unknown>((resolve, reject) => {

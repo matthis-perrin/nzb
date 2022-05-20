@@ -54,6 +54,8 @@ const nzb_checkerPath = path.join(process.cwd(), 'nzb_checker');
 const nzb_checkerDist = path.join(nzb_checkerPath, 'dist');
 const nzb_backfillPath = path.join(process.cwd(), 'nzb_backfill');
 const nzb_backfillDist = path.join(nzb_backfillPath, 'dist');
+const nzb_healthPath = path.join(process.cwd(), 'nzb_health');
+const nzb_healthDist = path.join(nzb_healthPath, 'dist');
 
 async function buildStandaloneLambda_nzb_registry(outputs) {
   runCommand({command: 'rm -rf dist', cwd: nzb_registryPath});
@@ -91,11 +93,24 @@ async function buildStandaloneLambda_nzb_backfill(outputs) {
   });
 }
 
+async function buildStandaloneLambda_nzb_health(outputs) {
+  runCommand({command: 'rm -rf dist', cwd: nzb_healthPath});
+  runCommand({
+    command: `yarn build`,
+    cwd: nzb_healthPath,
+  });
+  runCommand({
+    command: `yarn install --modules-folder dist/node_modules --production --no-bin-links`,
+    cwd: nzb_healthPath,
+  });
+}
+
 async function buildWorkspace(outputs) {
   await Promise.all([
     buildStandaloneLambda_nzb_registry(outputs),
     buildStandaloneLambda_nzb_checker(outputs),
     buildStandaloneLambda_nzb_backfill(outputs),
+    buildStandaloneLambda_nzb_health(outputs),
   ]);
 }
 
@@ -105,6 +120,7 @@ async function run() {
     {dist: nzb_registryDist, isLambda: true},
     {dist: nzb_checkerDist, isLambda: true},
     {dist: nzb_backfillDist, isLambda: true},
+    {dist: nzb_healthDist, isLambda: true},
   ]);
   let outputs = terraformOutputs();
   if (Object.keys(outputs).length === 0) {

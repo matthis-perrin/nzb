@@ -117,5 +117,3 @@ export async function handler(): Promise<void> {
     unprocessedItemsLeft: unprocessedItems.length,
   });
 }
-
-handler().catch(console.error);

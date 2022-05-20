@@ -1,5 +1,6 @@
 import request from 'request';
 
+import {IMDB_API_KEY} from './constant';
 import {ImdbInfo} from './models';
 import {
   asMap,
@@ -13,8 +14,6 @@ import {
 } from './type_utils';
 
 const OK = 200;
-
-const API_KEY = 'k_udmpb1il';
 
 export async function imdbSearch(fileName: string): Promise<ImdbSearch | undefined> {
   let simplerFileName = fileName.match(/^.*?(?:2160|19\d{2}|20[0-2]\d)/gu)?.[0];
@@ -35,7 +34,7 @@ interface ImdbSearch {
 
 async function imdbSearchApiCall(fileName: string): Promise<ImdbSearch | undefined> {
   return new Promise<ImdbSearch | undefined>((resolve, reject) => {
-    const url = `https://imdb-api.com/en/API/SearchMovie/${API_KEY}/${fileName.replace(
+    const url = `https://imdb-api.com/en/API/SearchMovie/${IMDB_API_KEY}/${fileName.replace(
       /[\s+]+/gu,
       '.'
     )}`;
@@ -72,7 +71,7 @@ function parseImdbSearch(res: unknown): ImdbSearch | undefined {
 
 export async function imdbInfo(imdbId: string): Promise<unknown> {
   return new Promise<unknown>((resolve, reject) => {
-    const url = `https://imdb-api.com/en/API/Title/${API_KEY}/${imdbId}`;
+    const url = `https://imdb-api.com/en/API/Title/${IMDB_API_KEY}/${imdbId}`;
     request.get({url}, (err: unknown, resp, body: unknown) => {
       // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
       if (err) {
@@ -190,7 +189,7 @@ export function parseImdbInfo(res: unknown): ImdbInfo {
 
 export async function apiCallLeft(): Promise<number> {
   return new Promise<number>((resolve, reject) => {
-    const url = `https://imdb-api.com/en/API/Usage/${API_KEY}`;
+    const url = `https://imdb-api.com/en/API/Usage/${IMDB_API_KEY}`;
     request.get({url}, (err: unknown, resp, body: unknown) => {
       // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
       if (err) {

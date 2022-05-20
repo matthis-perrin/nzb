@@ -11,6 +11,10 @@
     {
       "type": "standalone-lambda",
       "lambdaName": "nzb_backfill"
+    },
+    {
+      "type": "standalone-lambda",
+      "lambdaName": "nzb_health"
     }
   ],
   "folders": [
@@ -22,6 +26,9 @@
     },
     {
       "path": "nzb_backfill"
+    },
+    {
+      "path": "nzb_health"
     },
     {
       "path": "terraform"
@@ -39,6 +46,7 @@
       "nzb_registry": true,
       "nzb_checker": true,
       "nzb_backfill": true,
+      "nzb_health": true,
       "shared": true,
       "terraform": true
     },
