@@ -1,74 +1,60 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useState} from 'react';
 import styled from 'styled-components';
 
-import {ImdbNzbInfo} from '../../shared/src/models';
-import {asMapArrayOrThrow, asMapOrThrow} from '../../shared/src/type_utils';
+import {DaemonTab} from './daemon_tab';
+import {ImdbTab} from './imdb_tab';
 
-const DOMAIN =
-  process.env.NODE_ENV === 'production'
-    ? 'https://59erydl5c5.execute-api.eu-west-3.amazonaws.com/prod'
-    : 'http://localhost:7777';
+const TABS = ['Daemon', 'IMDB'] as const;
 
 export const App: React.FC = () => {
-  const [movies, setMovies] = useState<ImdbNzbInfo[] | undefined>(undefined);
+  const [currentTab, setCurrentTab] = useState<string>(TABS[0]);
 
-  useEffect(() => {
-    fetch(`${DOMAIN}/refresh-state`, {method: 'POST'})
-      .then(async res => res.json())
-      .then(res =>
-        setMovies(asMapArrayOrThrow(asMapOrThrow(res).items).map(item => item as ImdbNzbInfo))
-      )
-      .catch(err => alert(err));
+  const handleTabClick = useCallback<React.MouseEventHandler>(evt => {
+    const tab = evt.currentTarget.getAttribute('data-tab') ?? TABS[0];
+    setCurrentTab(tab);
   }, []);
-
-  if (movies === undefined) {
-    return <Wrapper>Loading...</Wrapper>;
-  }
 
   return (
     <Wrapper>
-      {movies.map(m => (
-        <div key={m.imdbId}>
-          <div>
-            <b>imdbId: </b>
-            {m.imdbId}
-          </div>
-          <div>
-            <b>bestNzbTitle: </b>
-            {m.bestNzbTitle}
-          </div>
-          <div>
-            <b>bestNzbId: </b>
-            {m.bestNzbId}
-          </div>
-          <div>
-            <b>bestNzbSize: </b>
-            {m.bestNzbSize}
-          </div>
-          <div>
-            <b>bestNzbDate: </b>
-            {new Date(m.bestNzbDate).toString()}
-          </div>
-          <div>
-            <b>title: </b>
-            {m.title}
-          </div>
-          <div>
-            <b>releaseDate: </b>
-            {new Date(m.releaseDate ?? 0).toString()}
-          </div>
-          <pre>{JSON.stringify(m, undefined, 2)}</pre>
-        </div>
-      ))}
+      <Tabs>
+        {TABS.map(tab => (
+          <Tab key={tab} data-tab={tab} selected={tab === currentTab} onClick={handleTabClick}>
+            {tab}
+          </Tab>
+        ))}
+      </Tabs>
+      <Content>{currentTab === 'Daemon' ? <DaemonTab /> : <ImdbTab />}</Content>
     </Wrapper>
   );
 };
 App.displayName = 'App';
 
 const Wrapper = styled.div`
-  background-color: #eee;
+  height: 100%;
+  background-color: #000;
   color: black;
   display: flex;
   flex-direction: column;
   gap: 16px;
+`;
+
+const Tabs = styled.div`
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px;
+`;
+
+const Tab = styled.div<{selected: boolean}>`
+  padding: 8px 16px;
+  cursor: pointer;
+  background: #5c527f;
+  outline: solid 2px ${p => (p.selected ? '#6E85B2' : 'none')};
+`;
+
+const Content = styled.div`
+  width: 100%;
+  flex-grow: 1;
 `;

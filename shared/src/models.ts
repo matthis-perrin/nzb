@@ -64,3 +64,28 @@ export type ImdbNzbInfoLight = Omit<
   ImdbNzbInfo,
   'directors' | 'writers' | 'stars' | 'actors' | 'companies'
 >;
+
+export interface DownloadStatus {
+  fileSizeMb: number;
+  downloadedSizeMb: number;
+  status: string;
+  path: string;
+  inQueue: boolean;
+}
+
+export type NzbDaemonTargetState = 'force-download' | 'download' | 'delete';
+
+export interface NzbDaemonStatus {
+  accountId: string;
+  imdbId: string;
+  nzbId: string;
+  nzbTitle: string;
+  nzbPubTs: number;
+  nzbSize: number;
+  targetState: NzbDaemonTargetState;
+  daemonState?: DownloadStatus;
+}
+
+export interface Account {
+  accountId: string;
+}

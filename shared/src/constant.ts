@@ -11,3 +11,8 @@ export const NEWSHOSTING_PORT = 119;
 export const NEWSHOSTING_SERVER = 'news.newshosting.com';
 export const NEWSHOSTING_USERNAME = 'matthis.perrin@gmail.com';
 export const NEWSHOSTING_PASSWORD = 'qn4rrevf4f';
+
+export const API_DOMAIN =
+  process.env.NODE_ENV === 'production'
+    ? 'https://59erydl5c5.execute-api.eu-west-3.amazonaws.com/prod'
+    : 'http://localhost:7777';

@@ -6,6 +6,9 @@ data "aws_iam_policy_document" "lambda_nzb_checker_extra_role" {
       "arn:aws:dynamodb:eu-west-3:*:table/NzbRegistry",
       "arn:aws:dynamodb:eu-west-3:*:table/NzbRegistry/index/*",
       "arn:aws:dynamodb:eu-west-3:*:table/ImdbInfo",
+      "arn:aws:dynamodb:eu-west-3:*:table/NzbDaemonStatus",
+      "arn:aws:dynamodb:eu-west-3:*:table/NzbDaemonStatus/index/*",
+      "arn:aws:dynamodb:eu-west-3:*:table/Account",
     ]
   }
   statement {

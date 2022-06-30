@@ -1,4 +1,7 @@
-import {queryLastReleasedImdbInfoItem} from '../../shared/src/dynamo';
+import {getImdb} from './get_imdb';
+import {getState} from './get_state';
+import {startDownload} from './start_download';
+import {updateDownloadStatus} from './update_download_status';
 
 export interface ApiGatewayProxyEventBase {
   body: string | null;
@@ -61,6 +64,8 @@ export async function handler(event: LambdaEvent): Promise<LambdaResponse> {
   const method = event.httpMethod.toUpperCase();
   const path = normalizePath(event.path);
 
+  // console.log('<<<<<<<<<', method, path);
+
   // CORS
   /* eslint-disable @typescript-eslint/naming-convention */
   const corsHeaders = {
@@ -81,12 +86,36 @@ export async function handler(event: LambdaEvent): Promise<LambdaResponse> {
   }
 
   const body = parseBody(event.body);
+  // console.log('BODY', body);
 
-  if (method === 'POST' && path === '/refresh-state') {
-    const lastItems = await queryLastReleasedImdbInfoItem(10);
+  if (method === 'POST' && path === '/get-state') {
     return {
       statusCode: 200,
-      body: JSON.stringify({items: lastItems}),
+      body: JSON.stringify(await getState(body)),
+      headers: corsHeaders,
+    };
+  }
+
+  if (method === 'POST' && path === '/get-imdb') {
+    return {
+      statusCode: 200,
+      body: JSON.stringify(await getImdb(body)),
+      headers: corsHeaders,
+    };
+  }
+
+  if (method === 'POST' && path === '/start-download') {
+    return {
+      statusCode: 200,
+      body: JSON.stringify(await startDownload(body)),
+      headers: corsHeaders,
+    };
+  }
+
+  if (method === 'POST' && path === '/update-download-status') {
+    return {
+      statusCode: 200,
+      body: JSON.stringify(await updateDownloadStatus(body)),
       headers: corsHeaders,
     };
   }

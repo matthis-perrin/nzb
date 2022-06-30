@@ -2,6 +2,7 @@ import {encode} from 'querystring';
 import request from 'request';
 
 import {NZBSU_API_KEY} from '../../shared/src/constant';
+import {DownloadStatus} from '../../shared/src/models';
 import {
   asMapArrayOrThrow,
   asMapOrThrow,
@@ -51,14 +52,6 @@ export async function startNzbDownload(nzbId: string): Promise<number> {
     throw new Error(`Failure to start download for ${nzbId}`);
   }
   return queueNumber;
-}
-
-export interface DownloadStatus {
-  fileSizeMb: number;
-  downloadedSizeMb: number;
-  status: string;
-  path: string;
-  inQueue: boolean;
 }
 
 export async function getDownloadStatus(queueNumber: number): Promise<DownloadStatus> {

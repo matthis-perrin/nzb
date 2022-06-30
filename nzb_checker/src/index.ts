@@ -6,7 +6,15 @@ import {
 } from '@aws-sdk/client-sqs';
 
 import {UNKNOWN_IDS} from '../../shared/src/constant';
-import {getImdbInfoItem, getNzbsuRegistryItem, putImdbInfoItem} from '../../shared/src/dynamo';
+import {
+  getImdbInfoItem,
+  getNzbsuRegistryItem,
+  insertNzbDaemonStatus,
+  putImdbInfoItem,
+  queryNzbDaemonStatusByImdbId,
+  scanAccounts,
+  updateNzbDaemonStatusTargetState,
+} from '../../shared/src/dynamo';
 import {imdbInfo, parseImdbInfo} from '../../shared/src/imdb';
 
 interface SqsTriggerEvent {
@@ -71,6 +79,7 @@ export async function handler(event: SqsTriggerEvent): Promise<void> {
         bestNzbDate: pubTs,
         bestNzbSize: size,
       });
+      await handleNewOrBetterNzb(guid, imdbId, title, pubTs, size);
     } catch (err: unknown) {
       await retryLater(err);
     }
@@ -83,5 +92,38 @@ export async function handler(event: SqsTriggerEvent): Promise<void> {
       bestNzbDate: pubTs,
       bestNzbSize: size,
     });
+    await handleNewOrBetterNzb(guid, imdbId, title, pubTs, size);
+  }
+}
+
+async function handleNewOrBetterNzb(
+  nzbId: string,
+  imdbId: string,
+  nzbTitle: string,
+  nzbPubTs: number,
+  nzbSize: number
+): Promise<void> {
+  const accounts = await scanAccounts();
+  for (const {accountId} of accounts) {
+    const res = await queryNzbDaemonStatusByImdbId(accountId, imdbId);
+    const itemForNzbId = res.find(item => item.nzbId === nzbId);
+    const allVersionDeleted =
+      res.length > 0 && res.find(item => item.targetState !== 'delete') === undefined;
+    for (const item of res) {
+      if (item.targetState === 'download' && item.nzbId !== nzbId) {
+        await updateNzbDaemonStatusTargetState(accountId, nzbId, 'delete');
+      }
+    }
+    if (!itemForNzbId && !allVersionDeleted) {
+      await insertNzbDaemonStatus(
+        accountId,
+        imdbId,
+        nzbId,
+        nzbTitle,
+        nzbPubTs,
+        nzbSize,
+        'download'
+      );
+    }
   }
 }

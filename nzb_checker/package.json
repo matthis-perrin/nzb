@@ -12,7 +12,8 @@
     ],
     "rules": {
       "no-console": "off",
-      "import/no-relative-packages": "off"
+      "import/no-relative-packages": "off",
+      "no-await-in-loop": "off"
     }
   },
   "devDependencies": {

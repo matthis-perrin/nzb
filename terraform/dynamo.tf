@@ -105,3 +105,53 @@ resource "aws_dynamodb_table" "parameters_table" {
     type = "S"
   }
 }
+
+resource "aws_dynamodb_table" "nzb_daemon_status_table" {
+  name           = "NzbDaemonStatus"
+  billing_mode   = "PAY_PER_REQUEST"
+  hash_key       = "accountId_nzbId"
+
+  attribute {
+    name = "accountId_nzbId"
+    type = "S"
+  }
+
+  attribute {
+    name = "accountId_imdbId"
+    type = "S"
+  }
+
+  attribute {
+    name = "accountId_targetState"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name               = "NzbDaemonStatus_ByAccountIdNzbId"
+    hash_key           = "accountId_nzbId"
+    projection_type    = "ALL"
+  }
+
+  global_secondary_index {
+    name               = "NzbDaemonStatus_ByAccountIdImdbId"
+    hash_key           = "accountId_imdbId"
+    projection_type    = "ALL"
+  }
+
+  global_secondary_index {
+    name               = "NzbDaemonStatus_ByAccountIdTargetState"
+    hash_key           = "accountId_targetState"
+    projection_type    = "ALL"
+  }
+}
+
+resource "aws_dynamodb_table" "account_table" {
+  name           = "Account"
+  billing_mode   = "PAY_PER_REQUEST"
+  hash_key       = "accountId"
+
+  attribute {
+    name = "accountId"
+    type = "S"
+  }
+}

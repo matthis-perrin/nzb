@@ -1,17 +1,46 @@
 import {rm} from 'fs/promises';
+import request from 'request';
 
+import {API_DOMAIN} from '../../shared/src/constant';
+import {DownloadStatus, NzbDaemonStatus} from '../../shared/src/models';
+import {asStringOrThrow} from '../../shared/src/type_utils';
 import {initDb} from './db';
-import {DownloadStatus, getConfig, getDownloadStatus, startNzbDownload} from './nzbget';
+import {getConfig, getDownloadStatus, startNzbDownload} from './nzbget';
 
-async function getTargetState(): Promise<{imdbId: string; nzbId: string}[]> {
-  // eslint-disable-next-line unicorn/no-useless-promise-resolve-reject
-  return Promise.resolve([{imdbId: 'tt1877830', nzbId: 'a2b0f7798b21ecad023825fa4ff6cfd6'}]);
+const ACCOUNT_ID = 'matthis';
+
+async function getTargetState(): Promise<NzbDaemonStatus[]> {
+  return new Promise<NzbDaemonStatus[]>((resolve, reject) => {
+    request.post(
+      `${API_DOMAIN}/get-state`,
+      {body: JSON.stringify({accountId: ACCOUNT_ID})},
+      (err: unknown, resp, body: unknown) => {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        if (err) {
+          reject(err);
+        } else {
+          resolve(JSON.parse(asStringOrThrow(body)).items as NzbDaemonStatus[]);
+        }
+      }
+    );
+  });
 }
 
-async function updateState(imdbId: string, nzbId: string, status: DownloadStatus): Promise<void> {
-  console.log(`UPDATE STATUS`, {imdbId, nzbId, status});
-  // eslint-disable-next-line unicorn/no-useless-promise-resolve-reject
-  return Promise.resolve();
+async function updateState(nzbId: string, downloadStatus: DownloadStatus): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    request.post(
+      `${API_DOMAIN}/update-download-status`,
+      {body: JSON.stringify({accountId: ACCOUNT_ID, nzbId, downloadStatus})},
+      (err: unknown) => {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      }
+    );
+  });
 }
 
 const inProgressDownload: Record<string, {imdbId: string; queueNumber: number}> = {};
@@ -23,7 +52,7 @@ async function startAndMonitorDownload(imdbId: string, nzbId: string): Promise<D
     function recursiveCheck(): void {
       getDownloadStatus(queueNumber)
         .then(async status => {
-          await updateState(imdbId, nzbId, status);
+          await updateState(nzbId, status);
           if (status.inQueue) {
             setTimeout(recursiveCheck, 2 * 1000);
           } else {
@@ -38,7 +67,7 @@ async function startAndMonitorDownload(imdbId: string, nzbId: string): Promise<D
   });
 }
 
-async function test(): Promise<void> {
+async function iter(): Promise<void> {
   const {dstDir} = await getConfig();
 
   const db = await initDb(dstDir);
@@ -69,4 +98,17 @@ async function test(): Promise<void> {
   }
 }
 
-test().catch(console.error);
+let lastIter = 0;
+const LOOP_PERIOD = 60 * 1000;
+
+function run(): void {
+  lastIter = Date.now();
+  iter()
+    .catch(console.error)
+    .finally(() => {
+      const waitTime = Math.max(0, LOOP_PERIOD - (Date.now() - lastIter));
+      setTimeout(run, waitTime);
+    });
+}
+
+run();
