@@ -47,11 +47,16 @@ export async function checkNzb(
             failure++;
           }
         }
+        if ((success + failure) % 1000 === 0) {
+          console.log({total: segments.length, success, failure});
+        }
       }
 
       await conn.runCommand('QUIT');
     })
   );
+
+  console.log({total: segments.length, success, failure});
 
   return {total: segments.length, success, failure};
 }

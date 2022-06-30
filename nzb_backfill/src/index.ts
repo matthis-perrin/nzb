@@ -78,37 +78,46 @@ export async function handler(): Promise<void> {
         .slice(0, 10)} [${toProcessType}] "${toProcess.imdbTitle}"`
     );
 
+    let imdbId = toProcess.imdbId;
     if (toProcessType === 'title') {
       left--;
       const imdbInfo = await imdbSearch(toProcess.title);
       if (!imdbInfo) {
         console.log('no match for', toProcess.title, toProcess.guid);
         await updateNzbsuRegistryItemsWithImdbInfo(toProcess.guid, NO_IMDB_MATCH_V3, '');
+        imdbId = NO_IMDB_MATCH_V3;
       } else {
         console.log(`${toProcess.guid} match "${imdbInfo.title}" (${imdbInfo.id})`);
         await updateNzbsuRegistryItemsWithImdbInfo(toProcess.guid, imdbInfo.id, imdbInfo.title);
+        imdbId = imdbInfo.id;
       }
       itemsWithUnmatchedTitle.shift();
       await waitFor(2 * 1000);
-    } else {
-      if (UNKNOWN_IDS.includes(toProcess.imdbId)) {
-        console.log(`Skipped ${toProcess.guid} "${toProcess.imdbId}"`);
-      } else {
-        const imdbInfo = await getImdbInfoItem(toProcess.imdbId);
-        const cachedImdb = imdbInfo !== undefined;
-
-        if (cachedImdb) {
-          console.log('Already cached in ImdbInfo');
-        } else {
-          console.log('Sending to SQS and waiting');
-          await sendItems([toProcess.guid]);
-        }
-        await waitFor(2 * 1000);
-      }
-      await setParameter('BACKFILL_LAST_REGISTRY_ITEM_PROCESSED', toProcess.guid);
-      unprocessedItems.shift();
     }
+
+    if (UNKNOWN_IDS.includes(imdbId)) {
+      console.log(`Skipped ${toProcess.guid} "${imdbId}"`);
+    } else {
+      const imdbInfo = await getImdbInfoItem(imdbId);
+      const cachedImdb = imdbInfo !== undefined;
+
+      if (cachedImdb) {
+        console.log('Already cached in ImdbInfo');
+      } else {
+        if (left === 0) {
+          break;
+        }
+        console.log('Sending to SQS');
+        left--;
+        await sendItems([toProcess.guid]);
+      }
+      await waitFor(2 * 1000);
+    }
+
+    await setParameter('BACKFILL_LAST_REGISTRY_ITEM_PROCESSED', toProcess.guid);
+    unprocessedItems.shift();
   }
+
   /* eslint-enable no-await-in-loop */
 
   console.log(`Done`, {

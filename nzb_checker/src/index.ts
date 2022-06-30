@@ -61,7 +61,9 @@ export async function handler(event: SqsTriggerEvent): Promise<void> {
   const imdbItem = await getImdbInfoItem(imdbId);
   if (imdbItem === undefined) {
     try {
+      console.log('No imdb info, fetching...');
       const info = parseImdbInfo(await imdbInfo(imdbId));
+      console.log(`Fetched "${info.title}"`);
       await putImdbInfoItem({
         ...info,
         bestNzbId: guid,
@@ -73,6 +75,7 @@ export async function handler(event: SqsTriggerEvent): Promise<void> {
       await retryLater(err);
     }
   } else if (imdbItem.bestNzbSize < size) {
+    console.log('File is bigger, updating bestNzb');
     await putImdbInfoItem({
       ...imdbItem,
       bestNzbId: guid,

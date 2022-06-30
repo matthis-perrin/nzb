@@ -23,6 +23,16 @@ resource "aws_dynamodb_table" "nzb_registry_table" {
     type = "N"
   }
 
+  attribute {
+    name = "healthTs"
+    type = "N"
+  }
+
+  attribute {
+    name = "healthStatus"
+    type = "S"
+  }
+
   global_secondary_index {
     name               = "NzbRegistry_ByImdbId_SortedByPubTs"
     hash_key           = "imdbId"
@@ -34,6 +44,13 @@ resource "aws_dynamodb_table" "nzb_registry_table" {
     name               = "NzbRegistry_All_SortedByPubTs"
     hash_key           = "v"
     range_key          = "pubTs"
+    projection_type    = "ALL"
+  }
+
+  global_secondary_index {
+    name               = "NzbRegistry_ByHealthFailure_SortedByHealthTs"
+    hash_key           = "healthStatus"
+    range_key          = "healthTs"
     projection_type    = "ALL"
   }
 }
@@ -58,10 +75,22 @@ resource "aws_dynamodb_table" "imdb_info_table" {
     type = "N"
   }
 
+  attribute {
+    name = "releaseDate"
+    type = "N"
+  }
+
   global_secondary_index {
     name               = "NzbRegistry_All_SortedByBestNzbDate"
     hash_key           = "v"
     range_key          = "bestNzbDate"
+    projection_type    = "ALL"
+  }
+
+  global_secondary_index {
+    name               = "NzbRegistry_All_SortedByReleaseDate"
+    hash_key           = "v"
+    range_key          = "releaseDate"
     projection_type    = "ALL"
   }
 }

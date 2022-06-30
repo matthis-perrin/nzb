@@ -15,6 +15,15 @@
     {
       "type": "standalone-lambda",
       "lambdaName": "nzb_health"
+    },
+    {
+      "type": "standalone-lambda",
+      "lambdaName": "nzb_daemon"
+    },
+    {
+      "type": "web-app",
+      "websiteName": "nzb_frontend",
+      "lambdaName": "nzb_backend"
     }
   ],
   "folders": [
@@ -29,6 +38,15 @@
     },
     {
       "path": "nzb_health"
+    },
+    {
+      "path": "nzb_daemon"
+    },
+    {
+      "path": "nzb_frontend"
+    },
+    {
+      "path": "nzb_backend"
     },
     {
       "path": "terraform"
@@ -47,8 +65,11 @@
       "nzb_checker": true,
       "nzb_backfill": true,
       "nzb_health": true,
-      "shared": true,
-      "terraform": true
+      "nzb_daemon": true,
+      "nzb_frontend": true,
+      "nzb_backend": true,
+      "terraform": true,
+      "shared": true
     },
     "editor.acceptSuggestionOnCommitCharacter": false,
     "editor.suggestSelection": "first",

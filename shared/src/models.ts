@@ -1,3 +1,9 @@
+export enum HealthStatus {
+  Unknown = 'unknown',
+  Healthy = 'healthy',
+  Unhealthy = 'unhealthy',
+}
+
 export interface NzbsuRegistryItem {
   guid: string;
   title: string;
@@ -5,6 +11,10 @@ export interface NzbsuRegistryItem {
   pubTs: number;
   imdbId: string;
   imdbTitle?: string;
+  healthStatus: HealthStatus;
+  healthTs: number;
+  healthFailed: number;
+  healthSuccess: number;
 }
 
 export interface ImdbEntity {
@@ -49,3 +59,8 @@ export interface ImdbNzbInfo extends ImdbInfo {
   bestNzbDate: number;
   bestNzbTitle: string;
 }
+
+export type ImdbNzbInfoLight = Omit<
+  ImdbNzbInfo,
+  'directors' | 'writers' | 'stars' | 'actors' | 'companies'
+>;

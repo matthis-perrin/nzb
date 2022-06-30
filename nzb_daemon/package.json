@@ -1,0 +1,30 @@
+{
+  "name": "nzb_daemon",
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "NODE_ENV=production webpack build",
+    "watch": "NODE_ENV=development webpack watch"
+  },
+  "prettier": "@matthis/prettier-config",
+  "eslintConfig": {
+    "extends": [
+      "@matthis/eslint-config-node"
+    ],
+    "rules": {
+      "no-console": "off",
+      "import/no-relative-packages": "off",
+      "no-await-in-loop": "off"
+    }
+  },
+  "devDependencies": {
+    "@matthis/eslint-config-node": "latest",
+    "@matthis/prettier-config": "latest",
+    "@matthis/tsconfig-node": "latest",
+    "@matthis/webpack-node": "latest",
+    "@types/node": "16.11.x",
+    "@types/request": "2.48.x"
+  },
+  "dependencies": {
+    "request": "2.88.x"
+  }
+}

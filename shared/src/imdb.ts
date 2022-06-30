@@ -24,6 +24,8 @@ export async function imdbSearch(fileName: string): Promise<ImdbSearch | undefin
     // eslint-disable-next-line @typescript-eslint/no-magic-numbers
     simplerFileName = simplerFileName.slice(0, -4);
   }
+  // eslint-disable-next-line no-control-regex
+  simplerFileName = simplerFileName.replace(/[^\u0000-\u007F]/gu, '');
   return imdbSearchApiCall(simplerFileName);
 }
 
@@ -34,6 +36,10 @@ interface ImdbSearch {
 
 async function imdbSearchApiCall(fileName: string): Promise<ImdbSearch | undefined> {
   return new Promise<ImdbSearch | undefined>((resolve, reject) => {
+    if (fileName.length === 0) {
+      resolve(undefined);
+      return;
+    }
     const url = `https://imdb-api.com/en/API/SearchMovie/${IMDB_API_KEY}/${fileName.replace(
       /[\s+]+/gu,
       '.'

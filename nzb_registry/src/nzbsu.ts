@@ -1,7 +1,7 @@
 import request from 'request';
 
 import {NZBSU_API_KEY} from '../../shared/src/constant';
-import {NzbsuRegistryItem} from '../../shared/src/models';
+import {HealthStatus, NzbsuRegistryItem} from '../../shared/src/models';
 import {
   asMapArrayOrThrow,
   asMapOrThrow,
@@ -41,13 +41,18 @@ export function parseNzbsuRegistryItems(res: unknown): NzbsuRegistryItem[] {
           return [asStringOrThrow(attrInfo.name), asStringOrThrow(attrInfo.value)];
         })
       );
+      const pubTs = new Date(asStringOrThrow(item['pubDate'])).getTime();
       return {
         guid: asStringOrThrow(attrs['guid']),
         title: asStringOrThrow(item['title']),
         size: asNumberOrThrow(attrs['size']),
-        pubTs: new Date(asStringOrThrow(item['pubDate'])).getTime(),
+        pubTs,
         imdbId: `tt${asString(attrs['imdb'], '0000000')}`,
         imdbTitle: asString(attrs['imdbtitle']),
+        healthTs: pubTs,
+        healthStatus: HealthStatus.Unknown,
+        healthSuccess: 0,
+        healthFailed: 0,
       };
     } catch (err: unknown) {
       console.log('Failure to parse item', JSON.stringify(item, undefined, 2));
