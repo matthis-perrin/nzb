@@ -447,7 +447,7 @@ export async function updateNzbGetStatus(accountId: string, status: NzbGetStatus
 
 export async function getNzbGetStatus(accountId: string): Promise<NzbGetStatus> {
   const res = await dynamoDb.send(new GetCommand({TableName: 'NzbgetStatus', Key: {accountId}}));
-  return res.Item ? (res.Item as NzbGetStatus) : {downloadRate: 0};
+  return (res.Item?.status as NzbGetStatus | undefined) ?? {downloadRate: 0};
 }
 
 // export async function updateHealthTs(): Promise<void> {

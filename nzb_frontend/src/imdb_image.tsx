@@ -3,14 +3,14 @@ import styled from 'styled-components';
 
 import {asMapOrThrow, asStringOrThrow} from '../../shared/src/type_utils';
 import {notifyError} from './errors';
-import {CustomImg} from './react';
+import {CustomAnchor} from './react';
 
 interface NzbDaemonStatusProps {
   imdbId: string;
   image: string | undefined;
 }
 
-export const ImdbImage: CustomImg<NzbDaemonStatusProps> = props => {
+export const ImdbImage: CustomAnchor<NzbDaemonStatusProps> = props => {
   const {imdbId, image, ...rest} = props;
 
   const [src, setSrc] = useState(image);
@@ -26,10 +26,15 @@ export const ImdbImage: CustomImg<NzbDaemonStatusProps> = props => {
     }
   }, [image, imdbId]);
 
-  return <Wrapper src={src} {...rest} />;
+  return (
+    <a {...rest} href={`https://www.imdb.com/title/${imdbId}/`} target="_blank" rel="noreferrer">
+      <Wrapper src={src} />
+    </a>
+  );
 };
 ImdbImage.displayName = 'ImdbImage';
 
 const Wrapper = styled.img`
   background-color: #888;
+  width: 100%;
 `;
