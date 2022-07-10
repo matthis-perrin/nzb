@@ -83,9 +83,14 @@ export interface NzbDaemonStatus {
   nzbPubTs: number;
   nzbSize: number;
   targetState: NzbDaemonTargetState;
-  daemonState?: DownloadStatus;
+  downloadStatus?: DownloadStatus;
 }
 
 export interface Account {
   accountId: string;
+  minReleaseDate: string;
+}
+
+export interface NzbGetStatus {
+  downloadRate: number;
 }

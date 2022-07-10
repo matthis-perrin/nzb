@@ -1,6 +1,5 @@
 import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
 import {
-  BatchGetCommand,
   BatchWriteCommand,
   DynamoDBDocumentClient,
   GetCommand,
@@ -18,6 +17,7 @@ import {
   ImdbNzbInfoLight,
   NzbDaemonStatus,
   NzbDaemonTargetState,
+  NzbGetStatus,
   NzbsuRegistryItem,
 } from './models';
 import {asMapArrayOrThrow, asMapOrThrow, asStringOrThrow} from './type_utils';
@@ -50,6 +50,44 @@ export async function getImdbInfoItem(imdbId: string): Promise<ImdbNzbInfo | und
   return res.Item as ImdbNzbInfo | undefined;
 }
 
+const lightAttributes = [
+  'imdbId',
+  'title',
+  'image',
+  'posters',
+  'backdrops',
+  'images',
+  'releaseDate',
+  'runtimeMins',
+  'plot',
+  'awards',
+  'genres',
+  'countries',
+  'languages',
+  'imdbRatingVotes',
+  'imdbRating',
+  'metacriticRating',
+  'theMovieDbRating',
+  'rottenTomatoesRating',
+  'bestNzbId',
+  'bestNzbSize',
+  'bestNzbDate',
+  'bestNzbTitle',
+];
+
+export async function getImdbInfoItemLight(imdbId: string): Promise<ImdbNzbInfoLight | undefined> {
+  const res = await dynamoDb.send(
+    new GetCommand({
+      TableName: 'ImdbInfo',
+      Key: {
+        imdbId,
+      },
+      ProjectionExpression: lightAttributes.join(', '),
+    })
+  );
+  return res.Item as ImdbNzbInfo | undefined;
+}
+
 export async function putImdbInfoItem(item: ImdbNzbInfo): Promise<void> {
   await dynamoDb.send(
     new PutCommand({
@@ -63,30 +101,6 @@ export async function putImdbInfoItem(item: ImdbNzbInfo): Promise<void> {
 }
 
 export async function queryLastReleasedImdbInfoItems(limit: number): Promise<ImdbNzbInfoLight[]> {
-  const lightAttributes = [
-    'imdbId',
-    'title',
-    'image',
-    'posters',
-    'backdrops',
-    'images',
-    'releaseDate',
-    'runtimeMins',
-    'plot',
-    'awards',
-    'genres',
-    'countries',
-    'languages',
-    'imdbRatingVotes',
-    'imdbRating',
-    'metacriticRating',
-    'theMovieDbRating',
-    'rottenTomatoesRating',
-    'bestNzbId',
-    'bestNzbSize',
-    'bestNzbDate',
-    'bestNzbTitle',
-  ];
   const res = await dynamoDb.send(
     new QueryCommand({
       TableName: 'ImdbInfo',
@@ -370,7 +384,7 @@ export async function updateNzbDaemonStatusTargetState(
 export async function updateNzbDaemonStatusDownloadStatus(
   accountId: string,
   nzbId: string,
-  downloadStatus: DownloadStatus
+  downloadStatus?: DownloadStatus
 ): Promise<void> {
   await dynamoDb.send(
     new UpdateCommand({
@@ -420,11 +434,20 @@ export async function insertNzbDaemonStatus(
 export async function scanAccounts(): Promise<Account[]> {
   const res = await dynamoDb.send(
     new ScanCommand({
-      TableName: 'Account',
+      TableName: 'NzbAccount',
     })
   );
 
   return (res.Items ?? []) as Account[];
+}
+
+export async function updateNzbGetStatus(accountId: string, status: NzbGetStatus): Promise<void> {
+  await dynamoDb.send(new PutCommand({TableName: 'NzbgetStatus', Item: {accountId, status}}));
+}
+
+export async function getNzbGetStatus(accountId: string): Promise<NzbGetStatus> {
+  const res = await dynamoDb.send(new GetCommand({TableName: 'NzbgetStatus', Key: {accountId}}));
+  return res.Item ? (res.Item as NzbGetStatus) : {downloadRate: 0};
 }
 
 // export async function updateHealthTs(): Promise<void> {

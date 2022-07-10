@@ -5,7 +5,14 @@ import {API_DOMAIN} from '../../shared/src/constant';
 import {DownloadStatus, NzbDaemonStatus} from '../../shared/src/models';
 import {asStringOrThrow} from '../../shared/src/type_utils';
 import {initDb} from './db';
-import {getConfig, getDownloadStatus, startNzbDownload} from './nzbget';
+import {
+  deleteHistory,
+  getConfig,
+  getDownloadStatus,
+  getDownloadStatusFromHistory,
+  getStatus,
+  startNzbDownload,
+} from './nzbget';
 
 const ACCOUNT_ID = 'matthis';
 
@@ -19,18 +26,20 @@ async function getTargetState(): Promise<NzbDaemonStatus[]> {
         if (err) {
           reject(err);
         } else {
-          resolve(JSON.parse(asStringOrThrow(body)).items as NzbDaemonStatus[]);
+          const targetState = JSON.parse(asStringOrThrow(body)).items as NzbDaemonStatus[];
+          resolve(targetState);
         }
       }
     );
   });
 }
 
-async function updateState(nzbId: string, downloadStatus: DownloadStatus): Promise<void> {
+async function updateState(nzbId: string, downloadStatus?: DownloadStatus): Promise<void> {
+  const serverStatus = await getStatus();
   return new Promise<void>((resolve, reject) => {
     request.post(
       `${API_DOMAIN}/update-download-status`,
-      {body: JSON.stringify({accountId: ACCOUNT_ID, nzbId, downloadStatus})},
+      {body: JSON.stringify({accountId: ACCOUNT_ID, nzbId, downloadStatus, serverStatus})},
       (err: unknown) => {
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (err) {
@@ -85,15 +94,23 @@ async function iter(): Promise<void> {
 
   // Deletion
   for (const movie of toDelete) {
-    await rm(movie.path);
+    await deleteHistory(movie.nzbId);
+    await rm(movie.path, {force: true, recursive: true});
     db.movies = db.movies.filter(m => !(movie.imdbId === m.imdbId && movie.nzbId === m.nzbId));
     await db.save();
+    await updateState(movie.nzbId, undefined);
   }
 
   // Download
   for (const movie of toDownload) {
     const finalStatus = await startAndMonitorDownload(movie.imdbId, movie.nzbId);
-    db.movies.push({imdbId: movie.imdbId, nzbId: movie.nzbId, path: finalStatus.path});
+    const realStatus =
+      finalStatus.path.length === 0
+        ? (await getDownloadStatusFromHistory(movie.nzbId)) ?? finalStatus
+        : finalStatus;
+    await updateState(movie.nzbId, realStatus);
+    const m = {imdbId: movie.imdbId, nzbId: movie.nzbId, path: realStatus.path};
+    db.movies.push(m);
     await db.save();
   }
 }

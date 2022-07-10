@@ -1,29 +1,54 @@
-import React, {useCallback, useState} from 'react';
+import React, {Fragment, useCallback, useState} from 'react';
 import styled from 'styled-components';
 
-import {DaemonTab} from './daemon_tab';
-import {ImdbTab} from './imdb_tab';
+import {toMegaBytes} from './format';
+import {LibraryTab} from './library_tab';
+import {RecentMoviesTab} from './recent_movies_tab';
+import {useDaemonData} from './stores';
 
-const TABS = ['Daemon', 'IMDB'] as const;
+interface Tab {
+  label: string;
+  component: React.FC;
+}
+
+const TABS: [Tab, ...Tab[]] = [
+  {label: 'Library', component: LibraryTab},
+  {label: 'Recent Movies', component: RecentMoviesTab},
+];
 
 export const App: React.FC = () => {
-  const [currentTab, setCurrentTab] = useState<string>(TABS[0]);
+  const [currentTab, setCurrentTab] = useState(TABS[0]);
+  const {state} = useDaemonData();
 
   const handleTabClick = useCallback<React.MouseEventHandler>(evt => {
-    const tab = evt.currentTarget.getAttribute('data-tab') ?? TABS[0];
+    const tab = TABS.find(t => t.label === evt.currentTarget.getAttribute('data-tab')) ?? TABS[0];
     setCurrentTab(tab);
   }, []);
 
+  const downloadRate = state?.status.downloadRate;
+
   return (
     <Wrapper>
+      {downloadRate === undefined ? (
+        <Fragment />
+      ) : (
+        <DownloadRate>{`${toMegaBytes(downloadRate)}/s`}</DownloadRate>
+      )}
       <Tabs>
         {TABS.map(tab => (
-          <Tab key={tab} data-tab={tab} selected={tab === currentTab} onClick={handleTabClick}>
-            {tab}
-          </Tab>
+          <TabButton
+            key={tab.label}
+            data-tab={tab.label}
+            selected={tab === currentTab}
+            onClick={handleTabClick}
+          >
+            {tab.label}
+          </TabButton>
         ))}
       </Tabs>
-      <Content>{currentTab === 'Daemon' ? <DaemonTab /> : <ImdbTab />}</Content>
+      <Content>
+        <currentTab.component />
+      </Content>
     </Wrapper>
   );
 };
@@ -47,7 +72,7 @@ const Tabs = styled.div`
   padding: 16px;
 `;
 
-const Tab = styled.div<{selected: boolean}>`
+const TabButton = styled.div<{selected: boolean}>`
   padding: 8px 16px;
   cursor: pointer;
   background: #5c527f;
@@ -57,4 +82,14 @@ const Tab = styled.div<{selected: boolean}>`
 const Content = styled.div`
   width: 100%;
   flex-grow: 1;
+`;
+
+const DownloadRate = styled.div`
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  padding: 8px 16px;
+  background-color: #ffffff11;
+  color: #ffffff66;
+  border-top-left-radius: 4px;
 `;

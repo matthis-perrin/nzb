@@ -2,8 +2,9 @@ import {encode} from 'querystring';
 import request from 'request';
 
 import {NZBSU_API_KEY} from '../../shared/src/constant';
-import {DownloadStatus} from '../../shared/src/models';
+import {DownloadStatus, NzbGetStatus} from '../../shared/src/models';
 import {
+  AnyMap,
   asMapArrayOrThrow,
   asMapOrThrow,
   asNumberOrThrow,
@@ -31,6 +32,13 @@ export async function getConfig(): Promise<NzbGetConfig> {
   return {dstDir};
 }
 
+export async function getStatus(): Promise<NzbGetStatus> {
+  const res = await rpc('status', []);
+  const status = asMapOrThrow(res);
+  const downloadRate = asNumberOrThrow(status.DownloadRate);
+  return {downloadRate};
+}
+
 export async function startNzbDownload(nzbId: string): Promise<number> {
   const res = await rpc('append', [
     '' /* NZBFilename */,
@@ -54,6 +62,15 @@ export async function startNzbDownload(nzbId: string): Promise<number> {
   return queueNumber;
 }
 
+function parseDownloadStatus(item: AnyMap, inQueue: boolean): DownloadStatus & {nzbId: number} {
+  const nzbId = asNumberOrThrow(item.NZBID);
+  const fileSizeMb = asNumberOrThrow(item.FileSizeMB);
+  const downloadedSizeMb = asNumberOrThrow(item.DownloadedSizeMB);
+  const status = asStringOrThrow(item.Status);
+  const path = asString(item.DestDir, '');
+  return {fileSizeMb, downloadedSizeMb, status, path, inQueue, nzbId};
+}
+
 export async function getDownloadStatus(queueNumber: number): Promise<DownloadStatus> {
   async function statusInternal(
     command: string,
@@ -64,15 +81,11 @@ export async function getDownloadStatus(queueNumber: number): Promise<DownloadSt
     const items = asMapArrayOrThrow(res);
     return removeUndefined(
       items.map(item => {
-        const nzbId = asNumberOrThrow(item.NZBID);
+        const {nzbId, ...downloadStatus} = parseDownloadStatus(item, inQueue);
         if (nzbId !== queueNumber) {
           return undefined;
         }
-        const fileSizeMb = asNumberOrThrow(item.FileSizeMB);
-        const downloadedSizeMb = asNumberOrThrow(item.DownloadedSizeMB);
-        const status = asStringOrThrow(item.Status);
-        const path = asString(item.DestDir, '');
-        return {fileSizeMb, downloadedSizeMb, status, path, inQueue};
+        return downloadStatus;
       })
     );
   }
@@ -118,3 +131,25 @@ async function rpc(method: string, params: unknown[] = []): Promise<unknown> {
     );
   });
 }
+
+export async function getDownloadStatusFromHistory(
+  nzbId: string
+): Promise<DownloadStatus | undefined> {
+  const history = asMapArrayOrThrow(await rpc('history', [false /* Hidden */]));
+  const item = history.find(h => h.DupeKey === nzbId && h.DestDir.length > 0);
+  if (!item) {
+    return undefined;
+  }
+  const {nzbId: discard, ...downloadStatus} = parseDownloadStatus(item, false);
+  return downloadStatus;
+}
+
+export async function deleteHistory(nzbId: string): Promise<void> {
+  const history = asMapArrayOrThrow(await rpc('history', [false /* Hidden */]));
+  const items = history.filter(h => h.DupeKey === nzbId);
+  await Promise.all(
+    items.map(async item => rpc('editqueue', ['HistoryFinalDelete', '', [item.ID]]))
+  );
+}
+
+// rpc('history', [false /* Hidden */]).then(console.log);

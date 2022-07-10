@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import {createGlobalStyle} from 'styled-components';
 
 import {App} from './app';
+import {refreshDaemonData, refreshImdbData} from './stores';
 
 const GlobalCss = createGlobalStyle`
   html, body, #root {
@@ -21,6 +22,9 @@ const GlobalCss = createGlobalStyle`
     color: inherit;
   }
 `;
+
+refreshDaemonData();
+refreshImdbData();
 
 ReactDOM.render(
   <React.StrictMode>

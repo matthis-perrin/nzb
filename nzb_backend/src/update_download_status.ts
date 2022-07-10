@@ -1,15 +1,19 @@
-import {updateNzbDaemonStatusDownloadStatus} from '../../shared/src/dynamo';
-import {DownloadStatus} from '../../shared/src/models';
-import {asMapOrThrow, asStringOrThrow} from '../../shared/src/type_utils';
+import {updateNzbDaemonStatusDownloadStatus, updateNzbGetStatus} from '../../shared/src/dynamo';
+import {DownloadStatus, NzbGetStatus} from '../../shared/src/models';
+import {asMap, asMapOrThrow, asStringOrThrow} from '../../shared/src/type_utils';
 
 export async function updateDownloadStatus(
   body: Record<string, unknown>
 ): Promise<Record<string, unknown>> {
   const accountId = asStringOrThrow(body.accountId);
   const nzbId = asStringOrThrow(body.nzbId);
-  const downloadStatus = asMapOrThrow(body.downloadStatus) as DownloadStatus;
+  const downloadStatus = asMap(body.downloadStatus) as DownloadStatus | undefined;
+  const serverStatus = asMapOrThrow(body.serverStatus) as NzbGetStatus;
 
-  await updateNzbDaemonStatusDownloadStatus(accountId, nzbId, downloadStatus);
+  await Promise.all([
+    updateNzbDaemonStatusDownloadStatus(accountId, nzbId, downloadStatus),
+    updateNzbGetStatus(accountId, serverStatus),
+  ]);
 
   return {};
 }

@@ -95,7 +95,7 @@ resource "aws_dynamodb_table" "imdb_info_table" {
   }
 }
 
-resource "aws_dynamodb_table" "parameters_table" {
+resource "aws_dynamodb_table" "nzb_parameters_table" {
   name           = "NzbParameters"
   billing_mode   = "PAY_PER_REQUEST"
   hash_key       = "key"
@@ -145,8 +145,19 @@ resource "aws_dynamodb_table" "nzb_daemon_status_table" {
   }
 }
 
-resource "aws_dynamodb_table" "account_table" {
-  name           = "Account"
+resource "aws_dynamodb_table" "nzb_account_table" {
+  name           = "NzbAccount"
+  billing_mode   = "PAY_PER_REQUEST"
+  hash_key       = "accountId"
+
+  attribute {
+    name = "accountId"
+    type = "S"
+  }
+}
+
+resource "aws_dynamodb_table" "nzbget_status_table" {
+  name           = "NzbgetStatus"
   billing_mode   = "PAY_PER_REQUEST"
   hash_key       = "accountId"
 

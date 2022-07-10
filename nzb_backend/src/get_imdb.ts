@@ -1,8 +1,11 @@
-import {queryLastReleasedImdbInfoItems} from '../../shared/src/dynamo';
-import {asNumber} from '../../shared/src/type_utils';
+import {getImdbInfoItemLight} from '../../shared/src/dynamo';
+import {asStringOrThrow} from '../../shared/src/type_utils';
 
 export async function getImdb(body: Record<string, unknown>): Promise<Record<string, unknown>> {
-  const limit = asNumber(body.limit, 100);
-  const res = await queryLastReleasedImdbInfoItems(limit);
-  return {items: res};
+  const imdbId = asStringOrThrow(body.imdbId);
+  const item = await getImdbInfoItemLight(imdbId);
+  if (!item) {
+    throw new Error(`Movie with imdbId "${imdbId}" not found`);
+  }
+  return item;
 }

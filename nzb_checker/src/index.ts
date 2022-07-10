@@ -79,7 +79,7 @@ export async function handler(event: SqsTriggerEvent): Promise<void> {
         bestNzbDate: pubTs,
         bestNzbSize: size,
       });
-      await handleNewOrBetterNzb(guid, imdbId, title, pubTs, size);
+      await handleNewOrBetterNzb(guid, imdbId, info.releaseDate, title, pubTs, size);
     } catch (err: unknown) {
       await retryLater(err);
     }
@@ -92,19 +92,24 @@ export async function handler(event: SqsTriggerEvent): Promise<void> {
       bestNzbDate: pubTs,
       bestNzbSize: size,
     });
-    await handleNewOrBetterNzb(guid, imdbId, title, pubTs, size);
+    await handleNewOrBetterNzb(guid, imdbId, imdbItem.releaseDate, title, pubTs, size);
   }
 }
 
 async function handleNewOrBetterNzb(
   nzbId: string,
   imdbId: string,
+  releaseDate: number | undefined,
   nzbTitle: string,
   nzbPubTs: number,
   nzbSize: number
 ): Promise<void> {
   const accounts = await scanAccounts();
-  for (const {accountId} of accounts) {
+  for (const {accountId, minReleaseDate} of accounts) {
+    const minReleaseDateTs = new Date(minReleaseDate).getTime();
+    if (releaseDate === undefined || releaseDate < minReleaseDateTs) {
+      continue;
+    }
     const res = await queryNzbDaemonStatusByImdbId(accountId, imdbId);
     const itemForNzbId = res.find(item => item.nzbId === nzbId);
     const allVersionDeleted =

@@ -1,4 +1,6 @@
+import {deleteDownload} from './delete_download';
 import {getImdb} from './get_imdb';
+import {getRecentImdb} from './get_recent_imdb';
 import {getState} from './get_state';
 import {startDownload} from './start_download';
 import {updateDownloadStatus} from './update_download_status';
@@ -96,6 +98,14 @@ export async function handler(event: LambdaEvent): Promise<LambdaResponse> {
     };
   }
 
+  if (method === 'POST' && path === '/get-recent-imdb') {
+    return {
+      statusCode: 200,
+      body: JSON.stringify(await getRecentImdb(body)),
+      headers: corsHeaders,
+    };
+  }
+
   if (method === 'POST' && path === '/get-imdb') {
     return {
       statusCode: 200,
@@ -108,6 +118,14 @@ export async function handler(event: LambdaEvent): Promise<LambdaResponse> {
     return {
       statusCode: 200,
       body: JSON.stringify(await startDownload(body)),
+      headers: corsHeaders,
+    };
+  }
+
+  if (method === 'POST' && path === '/delete-download') {
+    return {
+      statusCode: 200,
+      body: JSON.stringify(await deleteDownload(body)),
       headers: corsHeaders,
     };
   }
