@@ -1,24 +1,19 @@
 {
   "projects": [
     {
-      "type": "standalone-lambda",
-      "lambdaName": "nzb_registry"
+      "type": "shared"
     },
     {
       "type": "standalone-lambda",
-      "lambdaName": "nzb_checker"
+      "lambdaName": "nzb_nzbsu"
     },
     {
       "type": "standalone-lambda",
-      "lambdaName": "nzb_backfill"
+      "lambdaName": "nzb_tmdb"
     },
     {
-      "type": "standalone-lambda",
-      "lambdaName": "nzb_health"
-    },
-    {
-      "type": "standalone-lambda",
-      "lambdaName": "nzb_daemon"
+      "type": "node-script",
+      "scriptName": "nzb_nzbget_daemon"
     },
     {
       "type": "web-app",
@@ -28,19 +23,16 @@
   ],
   "folders": [
     {
-      "path": "nzb_registry"
+      "path": "shared"
     },
     {
-      "path": "nzb_checker"
+      "path": "nzb_nzbsu"
     },
     {
-      "path": "nzb_backfill"
+      "path": "nzb_tmdb"
     },
     {
-      "path": "nzb_health"
-    },
-    {
-      "path": "nzb_daemon"
+      "path": "nzb_nzbget_daemon"
     },
     {
       "path": "nzb_frontend"
@@ -52,24 +44,19 @@
       "path": "terraform"
     },
     {
-      "path": "shared"
-    },
-    {
       "path": ".",
       "name": "root"
     }
   ],
   "settings": {
     "files.exclude": {
-      "nzb_registry": true,
-      "nzb_checker": true,
-      "nzb_backfill": true,
-      "nzb_health": true,
-      "nzb_daemon": true,
+      "shared": true,
+      "nzb_nzbsu": true,
+      "nzb_tmdb": true,
+      "nzb_nzbget_daemon": true,
       "nzb_frontend": true,
       "nzb_backend": true,
-      "terraform": true,
-      "shared": true
+      "terraform": true
     },
     "editor.acceptSuggestionOnCommitCharacter": false,
     "editor.suggestSelection": "first",
@@ -79,6 +66,10 @@
     "git.confirmSync": false,
     "typescript.preferences.importModuleSpecifier": "non-relative",
     "eslint.lintTask.enable": true,
+    "eslint.useESLintClass": true,
+    "eslint.options": {
+      "reportUnusedDisableDirectives": "warn"
+    },
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
       "source.fixAll": false,

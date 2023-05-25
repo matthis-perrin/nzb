@@ -1,3 +1,7 @@
 {
-  "extends": "@matthis/tsconfig-node/tsconfig"
+  "extends": "@matthis/tsconfig-lib/tsconfig",
+  "compilerOptions": {
+    "baseUrl": "."
+  },
+  "include": ["src"]
 }

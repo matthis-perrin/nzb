@@ -3,6 +3,28 @@
   "license": "UNLICENSED",
   "scripts": {
     "setup": "node ./setup.js",
-    "deploy": "node ./deploy.js"
+    "deploy": "node ./deploy.js",
+    "build": "node ./build.mjs",
+    "watch": "node ./build.mjs --watch"
+  },
+  "eslintConfig": {
+    "ignorePatterns": [
+      "**/*.js"
+    ]
+  },
+  "devDependencies": {
+    "@matthis/eslint-config-lib": "1.1.4",
+    "@matthis/eslint-config-node": "1.1.4",
+    "@matthis/eslint-config-web": "1.1.4",
+    "@matthis/prettier-config": "1.1.1",
+    "@matthis/tsconfig-lib": "1.1.7",
+    "@matthis/tsconfig-node": "1.1.7",
+    "@matthis/tsconfig-web": "1.1.7",
+    "@matthis/webpack-lambda": "1.2.3",
+    "@matthis/webpack-lib": "1.2.3",
+    "@matthis/webpack-node-script": "1.2.3",
+    "@matthis/webpack-runner": "1.1.2",
+    "@matthis/webpack-web": "1.2.3",
+    "typescript": "4.8.x"
   }
 }

@@ -170,7 +170,7 @@ export function errorAsString(err: any): string {
     return asString(err) ?? String(err);
   }
 
-  const errorMessage = asString(errorMap.message);
+  const errorMessage = asString(errorMap['message']);
   if (errorMessage === undefined) {
     return String(err);
   }
@@ -183,7 +183,7 @@ export function errorAndStackAsString(err: unknown): string {
     return asString(err) ?? String(err);
   }
 
-  const stack = asString(errorMap.stack);
+  const stack = asString(errorMap['stack']);
   if (stack === undefined) {
     return String(err);
   }

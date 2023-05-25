@@ -40,25 +40,31 @@ function requirementDetection() {
 
 async function installNodeModulesAtPath(path) {
   return new Promise((resolve, reject) => {
-    exec(`yarn install --non-interactive`, {cwd: path}, (error, stdout, stderr) => {
-      if (!error) {
-        resolve();
-      } else {
-        console.error(`Failure to run \`yarn install\` at "${path}"`);
-        reject();
+    exec(
+      `yarn install --check-files --audit --non-interactive --ignore-optional`,
+      {cwd: path},
+      (error, stdout, stderr) => {
+        if (!error) {
+          resolve();
+        } else {
+          console.error(`Failure to run \`yarn install\` at "${path}"\n${stderr}`);
+          reject();
+        }
       }
-    });
+    );
   });
 }
 
 async function installNodeModules() {
-  await installNodeModulesAtPath(path.join(process.cwd(), 'nzb_registry'));
-  await installNodeModulesAtPath(path.join(process.cwd(), 'nzb_checker'));
-  await installNodeModulesAtPath(path.join(process.cwd(), 'nzb_backfill'));
-  await installNodeModulesAtPath(path.join(process.cwd(), 'nzb_health'));
-  await installNodeModulesAtPath(path.join(process.cwd(), 'nzb_daemon'));
-  await installNodeModulesAtPath(path.join(process.cwd(), 'nzb_frontend'));
-  await installNodeModulesAtPath(path.join(process.cwd(), 'nzb_backend'));
+  await Promise.all([
+    installNodeModulesAtPath(process.cwd()),
+    installNodeModulesAtPath(path.join(process.cwd(), 'shared')),
+    installNodeModulesAtPath(path.join(process.cwd(), 'nzb_nzbsu')),
+    installNodeModulesAtPath(path.join(process.cwd(), 'nzb_tmdb')),
+    installNodeModulesAtPath(path.join(process.cwd(), 'nzb_nzbget_daemon')),
+    installNodeModulesAtPath(path.join(process.cwd(), 'nzb_frontend')),
+    installNodeModulesAtPath(path.join(process.cwd(), 'nzb_backend')),
+  ]);
 }
 
 async function run() {

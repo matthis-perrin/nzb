@@ -1,10 +1,10 @@
 # Define any extra role for the lambda here
-data "aws_iam_policy_document" "lambda_nzb_backend_extra_role" {
+data "aws_iam_policy_document" "nzb_backend_lambda_extra_role" {
   statement {
     actions   = ["dynamodb:*"]
     resources = [
-      "arn:aws:dynamodb:eu-west-3:*:table/NzbRegistry",
-      "arn:aws:dynamodb:eu-west-3:*:table/NzbRegistry/index/*",
+      "arn:aws:dynamodb:eu-west-3:*:table/Nzbsu",
+      "arn:aws:dynamodb:eu-west-3:*:table/Nzbsu/index/*",
       "arn:aws:dynamodb:eu-west-3:*:table/ImdbInfo",
       "arn:aws:dynamodb:eu-west-3:*:table/ImdbInfo/index/*",
       "arn:aws:dynamodb:eu-west-3:*:table/NzbDaemonStatus",
@@ -15,17 +15,17 @@ data "aws_iam_policy_document" "lambda_nzb_backend_extra_role" {
 }
 
 resource "aws_lambda_function" "nzb_backend" {
-  function_name     = "nzb_backend-API"
+  function_name     = "nzb-nzb_backend"
   s3_bucket         = aws_s3_bucket.code.id
   s3_key            = aws_s3_bucket_object.nzb_backend_archive.id
   source_code_hash  = data.archive_file.nzb_backend_archive.output_sha
-  handler           = "main.handler"
+  handler           = "index.handler"
   runtime           = "nodejs14.x"
-  role              = aws_iam_role.lambda_nzb_backend_exec.arn
+  role              = aws_iam_role.nzb_backend_lambda_exec.arn
 }
 
-resource "aws_iam_role" "lambda_nzb_backend_exec" {
-  name = "nzb_backend-API-assume-role"
+resource "aws_iam_role" "nzb_backend_lambda_exec" {
+  name = "nzb-nzb_backend-assume-role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -41,7 +41,7 @@ resource "aws_iam_role" "lambda_nzb_backend_exec" {
   })
 
   inline_policy {
-    name = "nzb_backend-API-cloudwatch-role"
+    name = "nzb-nzb_backend-cloudwatch-role"
     policy = jsonencode({
       Version = "2012-10-17"
       Statement = [
@@ -59,8 +59,8 @@ resource "aws_iam_role" "lambda_nzb_backend_exec" {
   }
   
   inline_policy {
-    name = "nzb_backend-API-extra-role"
-    policy = data.aws_iam_policy_document.lambda_nzb_backend_extra_role.json
+    name = "nzb-nzb_backend-extra-role"
+    policy = data.aws_iam_policy_document.nzb_backend_lambda_extra_role.json
   }
 }
 
@@ -79,12 +79,12 @@ resource "aws_s3_bucket_object" "nzb_backend_archive" {
 
 output "nzb_backend_api_url" {
   value = aws_api_gateway_deployment.nzb_backend.invoke_url
-  description = "URL where the \"nzb_backend\" lambda api can be called."
+  description = "URL where the \"nzb-nzb_backend\" lambda api can be called."
 }
 
 resource "aws_api_gateway_rest_api" "nzb_backend" {
-  name        = "nzb_backend-RestAPI"
-  description = "Rest API for the \"nzb_backend\" app"
+  name        = "nzb-nzb_backend-RestAPI"
+  description = "Rest API for the \"nzb-nzb_backend\" app"
 }
 
 resource "aws_api_gateway_resource" "nzb_backend" {

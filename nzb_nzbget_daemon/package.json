@@ -1,5 +1,5 @@
 {
-  "name": "shared",
+  "name": "nzb_nzbget_daemon",
   "version": "1.0.0",
   "license": "UNLICENSED",
   "type": "module",
@@ -11,21 +11,13 @@
   "prettier": "@matthis/prettier-config",
   "eslintConfig": {
     "extends": [
-      "@matthis/eslint-config-lib"
+      "@matthis/eslint-config-node"
     ],
     "rules": {
-      "no-console": "off",
-      "@typescript-eslint/naming-convention": "off"
+      "no-console": "off"
     }
   },
   "devDependencies": {
-    "@types/node": "16.11.x",
-    "@types/request": "2.48.x"
-  },
-  "dependencies": {
-    "@aws-sdk/client-dynamodb": "3.85.x",
-    "@aws-sdk/client-sqs": "3.85.x",
-    "@aws-sdk/lib-dynamodb": "3.82.x",
-    "request": "2.88.x"
+    "webpack-cli": "^5.1.1"
   }
 }

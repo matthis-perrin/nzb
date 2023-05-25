@@ -1,7 +1,6 @@
 import request from 'request';
 
-import {IMDB_API_KEY} from './constant';
-import {ImdbInfo} from './models';
+import {ImdbInfo} from '@shared/models';
 import {
   asMap,
   asMapArray,
@@ -11,7 +10,9 @@ import {
   asNumberOrThrow,
   asString,
   asStringOrThrow,
-} from './type_utils';
+} from '@shared/type_utils';
+
+import {IMDB_API_KEY} from '@src/constant';
 
 const OK = 200;
 
@@ -61,14 +62,14 @@ async function imdbSearchApiCall(fileName: string): Promise<ImdbSearch | undefin
 
 function parseImdbSearch(res: unknown): ImdbSearch | undefined {
   const json = asMapOrThrow(res);
-  if (typeof json.errorMessage === 'string' && json.errorMessage.length > 0) {
-    throw new Error(`API error "${json.errorMessage}"`);
+  if (typeof json['errorMessage'] === 'string' && json['errorMessage'].length > 0) {
+    throw new Error(`API error "${json['errorMessage']}"`);
   }
   try {
-    const firstResult = asMapOrThrow(asMapArrayOrThrow(json.results)[0]);
+    const firstResult = asMapOrThrow(asMapArrayOrThrow(json['results'])[0]);
     return {
-      id: asStringOrThrow(firstResult.id),
-      title: asStringOrThrow(firstResult.title),
+      id: asStringOrThrow(firstResult['id']),
+      title: asStringOrThrow(firstResult['title']),
     };
   } catch {
     return undefined;
@@ -120,51 +121,51 @@ function parseRuntime(data: unknown): number | undefined {
 export function parseImdbInfo(res: unknown): ImdbInfo {
   const json = asMapOrThrow(res);
 
-  const imdbId = asStringOrThrow(json.id);
-  const title = asStringOrThrow(json.title);
-  const image = asString(json.image);
-  const releaseDateString = asString(json.releaseDate);
+  const imdbId = asStringOrThrow(json['id']);
+  const title = asStringOrThrow(json['title']);
+  const image = asString(json['image']);
+  const releaseDateString = asString(json['releaseDate']);
   const releaseDate =
     releaseDateString === undefined ? undefined : new Date(releaseDateString).getTime();
-  const runtimeMins = parseRuntime(json.runtimeMins);
-  const plot = asString(json.plot);
-  const awards = asString(json.awards);
-  const directors = asMapArray(json.directorList, []).map(a => ({
-    id: asStringOrThrow(a.id),
-    name: asStringOrThrow(a.name),
+  const runtimeMins = parseRuntime(json['runtimeMins']);
+  const plot = asString(json['plot']);
+  const awards = asString(json['awards']);
+  const directors = asMapArray(json['directorList'], []).map(a => ({
+    id: asStringOrThrow(a['id']),
+    name: asStringOrThrow(a['name']),
   }));
-  const writers = asMapArray(json.writerList, []).map(a => ({
-    id: asStringOrThrow(a.id),
-    name: asStringOrThrow(a.name),
+  const writers = asMapArray(json['writerList'], []).map(a => ({
+    id: asStringOrThrow(a['id']),
+    name: asStringOrThrow(a['name']),
   }));
-  const stars = asMapArray(json.starList, []).map(a => ({
-    id: asStringOrThrow(a.id),
-    name: asStringOrThrow(a.name),
+  const stars = asMapArray(json['starList'], []).map(a => ({
+    id: asStringOrThrow(a['id']),
+    name: asStringOrThrow(a['name']),
   }));
-  const actors = asMapArray(json.actorList, []).map(a => ({
-    id: asStringOrThrow(a.id),
-    image: asStringOrThrow(a.image),
-    name: asStringOrThrow(a.name),
-    asCharacter: asStringOrThrow(a.asCharacter),
+  const actors = asMapArray(json['actorList'], []).map(a => ({
+    id: asStringOrThrow(a['id']),
+    image: asStringOrThrow(a['image']),
+    name: asStringOrThrow(a['name']),
+    asCharacter: asStringOrThrow(a['asCharacter']),
   }));
-  const genres = asMapArray(json.genreList, []).map(a => asStringOrThrow(a.value));
-  const companies = asMapArray(json.companyList, []).map(a => ({
-    id: asStringOrThrow(a.id),
-    name: asStringOrThrow(a.name),
+  const genres = asMapArray(json['genreList'], []).map(a => asStringOrThrow(a['value']));
+  const companies = asMapArray(json['companyList'], []).map(a => ({
+    id: asStringOrThrow(a['id']),
+    name: asStringOrThrow(a['name']),
   }));
-  const countries = asMapArray(json.countryList, []).map(a => asStringOrThrow(a.value));
-  const languages = asMapArray(json.languageList, []).map(a => asStringOrThrow(a.value));
-  const imdbRatingVotes = asNumber(json.imDbRatingVotes);
-  const imdbRating = asNumber(json.imDbRating);
-  const metacriticRating = asNumber(json.metacriticRating);
-  const ratings = asMap(json.ratings, {});
-  const theMovieDbRating = asNumber(ratings.theMovieDb);
-  const rottenTomatoesRating = asNumber(ratings.rottenTomatoes);
-  const posterData = asMap(json.posters, {});
-  const posters = asMapArray(posterData.posters, []).map(a => asStringOrThrow(a.link));
-  const backdrops = asMapArray(posterData.backdrops, []).map(a => asStringOrThrow(a.link));
-  const imageData = asMap(json.images, {});
-  const images = asMapArray(imageData.images, []).map(a => asStringOrThrow(a.image));
+  const countries = asMapArray(json['countryList'], []).map(a => asStringOrThrow(a['value']));
+  const languages = asMapArray(json['languageList'], []).map(a => asStringOrThrow(a['value']));
+  const imdbRatingVotes = asNumber(json['imDbRatingVotes']);
+  const imdbRating = asNumber(json['imDbRating']);
+  const metacriticRating = asNumber(json['metacriticRating']);
+  const ratings = asMap(json['ratings'], {});
+  const theMovieDbRating = asNumber(ratings['theMovieDb']);
+  const rottenTomatoesRating = asNumber(ratings['rottenTomatoes']);
+  const posterData = asMap(json['posters'], {});
+  const posters = asMapArray(posterData['posters'], []).map(a => asStringOrThrow(a['link']));
+  const backdrops = asMapArray(posterData['backdrops'], []).map(a => asStringOrThrow(a['link']));
+  const imageData = asMap(json['images'], {});
+  const images = asMapArray(imageData['images'], []).map(a => asStringOrThrow(a['image']));
 
   return {
     imdbId,

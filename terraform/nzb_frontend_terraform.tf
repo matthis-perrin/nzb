@@ -1,6 +1,6 @@
 output "nzb_frontend_cloudfront_domain_name" {
   value       = aws_cloudfront_distribution.nzb_frontend.domain_name
-  description = "Domain (from cloudfront) where the \"nzb_frontend\" frontend is available."
+  description = "Domain (from cloudfront) where the \"nzb-nzb_frontend\" frontend is available."
 }
 
 module "nzb_frontend_template_files" {

@@ -1,5 +1,5 @@
 {
-  "name": "nzb_backend",
+  "name": "nzb_nzbsu",
   "license": "UNLICENSED",
   "type": "module",
   "scripts": {
@@ -10,9 +10,16 @@
   "eslintConfig": {
     "extends": [
       "@matthis/eslint-config-node"
-    ]
+    ],
+    "rules": {
+      "no-console": "off"
+    }
   },
   "devDependencies": {
-    "@types/node": "16.11.x"
+    "@types/node": "16.11.x",
+    "@types/request": "2.48.x"
+  },
+  "dependencies": {
+    "request": "2.88.x"
   }
 }

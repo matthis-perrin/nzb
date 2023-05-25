@@ -23,7 +23,7 @@ function ensureDistFolders(projects) {
       const files = fs.readdirSync(dist);
       if (files.length === 0) {
         fs.writeFileSync(
-          path.join(dist, 'main.js'),
+          path.join(dist, 'index.js'),
           `exports.handler = async function() {return ''};`
         );
       }
@@ -48,78 +48,54 @@ function terraformOutputs() {
   );
 }
 
-const nzb_registryPath = path.join(process.cwd(), 'nzb_registry');
-const nzb_registryDist = path.join(nzb_registryPath, 'dist');
-const nzb_checkerPath = path.join(process.cwd(), 'nzb_checker');
-const nzb_checkerDist = path.join(nzb_checkerPath, 'dist');
-const nzb_backfillPath = path.join(process.cwd(), 'nzb_backfill');
-const nzb_backfillDist = path.join(nzb_backfillPath, 'dist');
-const nzb_healthPath = path.join(process.cwd(), 'nzb_health');
-const nzb_healthDist = path.join(nzb_healthPath, 'dist');
-const nzb_daemonPath = path.join(process.cwd(), 'nzb_daemon');
-const nzb_daemonDist = path.join(nzb_daemonPath, 'dist');
+const sharedPath = path.join(process.cwd(), 'shared');
+const sharedDist = path.join(sharedPath, 'dist');
+const nzb_nzbsuPath = path.join(process.cwd(), 'nzb_nzbsu');
+const nzb_nzbsuDist = path.join(nzb_nzbsuPath, 'dist');
+const nzb_tmdbPath = path.join(process.cwd(), 'nzb_tmdb');
+const nzb_tmdbDist = path.join(nzb_tmdbPath, 'dist');
+const nzb_nzbget_daemonPath = path.join(process.cwd(), 'nzb_nzbget_daemon');
+const nzb_nzbget_daemonDist = path.join(nzb_nzbget_daemonPath, 'dist');
 const nzb_frontendPath = path.join(process.cwd(), 'nzb_frontend');
 const nzb_frontendDist = path.join(nzb_frontendPath, 'dist');
 const nzb_backendPath = path.join(process.cwd(), 'nzb_backend');
 const nzb_backendDist = path.join(nzb_backendPath, 'dist');
 
-async function buildStandaloneLambda_nzb_registry(outputs) {
-  runCommand({command: 'rm -rf dist', cwd: nzb_registryPath});
+async function buildShared(outputs) {
   runCommand({
     command: `yarn build`,
-    cwd: nzb_registryPath,
-  });
-  runCommand({
-    command: `yarn install --modules-folder dist/node_modules --production --no-bin-links`,
-    cwd: nzb_registryPath,
+    cwd: sharedPath,
   });
 }
 
-async function buildStandaloneLambda_nzb_checker(outputs) {
-  runCommand({command: 'rm -rf dist', cwd: nzb_checkerPath});
+async function buildStandaloneLambda_nzb_nzbsu(outputs) {
+  runCommand({command: 'rm -rf dist', cwd: nzb_nzbsuPath});
   runCommand({
     command: `yarn build`,
-    cwd: nzb_checkerPath,
+    cwd: nzb_nzbsuPath,
   });
   runCommand({
     command: `yarn install --modules-folder dist/node_modules --production --no-bin-links`,
-    cwd: nzb_checkerPath,
+    cwd: nzb_nzbsuPath,
   });
 }
 
-async function buildStandaloneLambda_nzb_backfill(outputs) {
-  runCommand({command: 'rm -rf dist', cwd: nzb_backfillPath});
+async function buildStandaloneLambda_nzb_tmdb(outputs) {
+  runCommand({command: 'rm -rf dist', cwd: nzb_tmdbPath});
   runCommand({
     command: `yarn build`,
-    cwd: nzb_backfillPath,
+    cwd: nzb_tmdbPath,
   });
   runCommand({
     command: `yarn install --modules-folder dist/node_modules --production --no-bin-links`,
-    cwd: nzb_backfillPath,
+    cwd: nzb_tmdbPath,
   });
 }
 
-async function buildStandaloneLambda_nzb_health(outputs) {
-  runCommand({command: 'rm -rf dist', cwd: nzb_healthPath});
+async function buildNodeScript_nzb_nzbget_daemon(outputs) {
   runCommand({
     command: `yarn build`,
-    cwd: nzb_healthPath,
-  });
-  runCommand({
-    command: `yarn install --modules-folder dist/node_modules --production --no-bin-links`,
-    cwd: nzb_healthPath,
-  });
-}
-
-async function buildStandaloneLambda_nzb_daemon(outputs) {
-  runCommand({command: 'rm -rf dist', cwd: nzb_daemonPath});
-  runCommand({
-    command: `yarn build`,
-    cwd: nzb_daemonPath,
-  });
-  runCommand({
-    command: `yarn install --modules-folder dist/node_modules --production --no-bin-links`,
-    cwd: nzb_daemonPath,
+    cwd: nzb_nzbget_daemonPath,
   });
 }
 
@@ -150,11 +126,10 @@ async function buildWebApp_nzb_frontend(outputs) {
 
 async function buildWorkspace(outputs) {
   await Promise.all([
-    buildStandaloneLambda_nzb_registry(outputs),
-    buildStandaloneLambda_nzb_checker(outputs),
-    buildStandaloneLambda_nzb_backfill(outputs),
-    buildStandaloneLambda_nzb_health(outputs),
-    buildStandaloneLambda_nzb_daemon(outputs),
+    buildShared(outputs),
+    buildStandaloneLambda_nzb_nzbsu(outputs),
+    buildStandaloneLambda_nzb_tmdb(outputs),
+    buildNodeScript_nzb_nzbget_daemon(outputs),
     buildWebApp_nzb_frontend(outputs),
   ]);
 }
@@ -162,11 +137,10 @@ async function buildWorkspace(outputs) {
 async function run() {
   // Initialize if needed and get terraform outputs
   ensureDistFolders([
-    {dist: nzb_registryDist, isLambda: true},
-    {dist: nzb_checkerDist, isLambda: true},
-    {dist: nzb_backfillDist, isLambda: true},
-    {dist: nzb_healthDist, isLambda: true},
-    {dist: nzb_daemonDist, isLambda: true},
+    {dist: sharedDist},
+    {dist: nzb_nzbsuDist, isLambda: true},
+    {dist: nzb_tmdbDist, isLambda: true},
+    {dist: nzb_nzbget_daemonDist},
     {dist: nzb_frontendDist},
     {dist: nzb_backendDist, isLambda: true},
   ]);

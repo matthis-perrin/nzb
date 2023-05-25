@@ -1,19 +1,19 @@
-resource "aws_lambda_permission" "cloudwatch_invoke_nzb_registry" {
+resource "aws_lambda_permission" "cloudwatch_invoke_nzb_nzbsu" {
   statement_id  = "AllowExecutionFromCloudWatch"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.nzb_registry.arn
+  function_name = aws_lambda_function.nzb_nzbsu.arn
   principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.nzb_registry_trigger_rate.arn
+  source_arn    = aws_cloudwatch_event_rule.nzb_nzbsu_trigger_rate.arn
 }
 
-resource "aws_cloudwatch_event_rule" "nzb_registry_trigger_rate" {
-  name_prefix         = "nzb_registry.rate-5-minutes."
+resource "aws_cloudwatch_event_rule" "nzb_nzbsu_trigger_rate" {
+  name_prefix         = "nzb_nzbsu.rate-5-minutes."
   schedule_expression = "rate(5 minutes)"
 }
 
-resource "aws_cloudwatch_event_target" "nzb_registry_trigger_target" {
-  rule  = aws_cloudwatch_event_rule.nzb_registry_trigger_rate.name
-  arn   = aws_lambda_function.nzb_registry.arn
+resource "aws_cloudwatch_event_target" "nzb_nzbsu_trigger_target" {
+  rule  = aws_cloudwatch_event_rule.nzb_nzbsu_trigger_rate.name
+  arn   = aws_lambda_function.nzb_nzbsu.arn
 }
 
 //

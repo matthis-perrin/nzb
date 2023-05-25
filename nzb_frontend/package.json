@@ -1,36 +1,28 @@
 {
   "name": "nzb_frontend",
   "license": "UNLICENSED",
+  "type": "module",
   "scripts": {
-    "build": "NODE_ENV=production webpack build",
-    "start": "NODE_ENV=development webpack serve"
+    "build": "NODE_ENV=production ../node_modules/.bin/webpack build",
+    "start": "NODE_ENV=development ../node_modules/.bin/webpack serve"
   },
   "prettier": "@matthis/prettier-config",
   "eslintConfig": {
     "extends": [
       "@matthis/eslint-config-web"
-    ],
-    "rules": {
-      "no-console": "off",
-      "import/no-relative-packages": "off",
-      "no-await-in-loop": "off"
-    }
+    ]
   },
   "devDependencies": {
-    "@matthis/eslint-config-web": "latest",
-    "@matthis/prettier-config": "latest",
-    "@matthis/tsconfig-web": "latest",
-    "@matthis/webpack-web": "latest",
     "@types/react": "17.0.x",
     "@types/react-dom": "17.0.x",
-    "@types/styled-components": "5.1.x"
+    "@types/styled-components": "5.1.x",
+    "webpack-cli": "^5.1.1"
   },
   "dependencies": {
     "react": "17.0.x",
     "react-dom": "17.0.x",
     "react-router": "5.2.x",
     "react-router-dom": "5.2.x",
-    "styled-components": "5.1.x",
-    "webpack-dev-server": "^4.9.2"
+    "styled-components": "5.1.x"
   }
 }

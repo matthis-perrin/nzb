@@ -1,6 +1,8 @@
 import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
 import {
+  BatchGetCommand,
   BatchWriteCommand,
+  DeleteCommand,
   DynamoDBDocumentClient,
   GetCommand,
   PutCommand,
@@ -18,9 +20,11 @@ import {
   NzbDaemonStatus,
   NzbDaemonTargetState,
   NzbGetStatus,
-  NzbsuRegistryItem,
-} from './models';
-import {asMapArrayOrThrow, asMapOrThrow, asStringOrThrow} from './type_utils';
+  NzbsuItem,
+  TmdbMovieItem,
+  TmdbTvShowItem,
+} from '@shared/models';
+import {asMapArrayOrThrow, asMapOrThrow, asStringOrThrow} from '@shared/type_utils';
 
 const dynamoDb = DynamoDBDocumentClient.from(new DynamoDBClient({region: 'eu-west-3'}), {
   marshallOptions: {removeUndefinedValues: true},
@@ -28,14 +32,34 @@ const dynamoDb = DynamoDBDocumentClient.from(new DynamoDBClient({region: 'eu-wes
 
 const VERSION = '0';
 
-export async function getNzbsuRegistryItem(guid: string): Promise<NzbsuRegistryItem | undefined> {
+export async function getNzbsuItem(guid: string): Promise<NzbsuItem | undefined> {
   const res = await dynamoDb.send(
     new GetCommand({
-      TableName: 'NzbRegistry',
+      TableName: 'Nzbsu',
       Key: {guid},
     })
   );
-  return res.Item as NzbsuRegistryItem | undefined;
+  return res.Item as NzbsuItem | undefined;
+}
+
+export async function batchGetNzbsuItem(
+  guids: string[]
+): Promise<Record<string, NzbsuItem | undefined>> {
+  const deduped = [...new Set(guids).values()];
+  const res = await dynamoDb.send(
+    new BatchGetCommand({
+      RequestItems: {
+        Nzbsu: {Keys: deduped.map(guid => ({guid}))},
+      },
+    })
+  );
+  const items = res.Responses?.['Nzbsu'] ?? [];
+  const itemsMap: Record<string, NzbsuItem | undefined> = {};
+  for (const item of items) {
+    const nzbsuItem = item as NzbsuItem;
+    itemsMap[nzbsuItem.guid] = nzbsuItem;
+  }
+  return Object.fromEntries(deduped.map(id => [id, itemsMap[id]]));
 }
 
 export async function getImdbInfoItem(imdbId: string): Promise<ImdbNzbInfo | undefined> {
@@ -48,6 +72,56 @@ export async function getImdbInfoItem(imdbId: string): Promise<ImdbNzbInfo | und
     })
   );
   return res.Item as ImdbNzbInfo | undefined;
+}
+
+export async function getTmdbMovieItem(imdbId: string): Promise<TmdbMovieItem | undefined> {
+  const res = await dynamoDb.send(
+    new QueryCommand({
+      TableName: 'TmdbMovie',
+      IndexName: 'TmdbMovie_ByImdbId',
+      KeyConditions: {
+        imdb_id: {ComparisonOperator: 'EQ', AttributeValueList: [imdbId]},
+      },
+    })
+  );
+  return res.Items?.[0] as TmdbMovieItem;
+}
+
+export async function getTmdbTvShowItem(imdbId: string): Promise<TmdbTvShowItem | undefined> {
+  const res = await dynamoDb.send(
+    new QueryCommand({
+      TableName: 'TmdbTvShow',
+      IndexName: 'TmdbTvShow_ByImdbId',
+      KeyConditions: {
+        imdb_id: {ComparisonOperator: 'EQ', AttributeValueList: [imdbId]},
+      },
+    })
+  );
+  return res.Items?.[0] as TmdbTvShowItem;
+}
+
+export async function putTmdbMovieItem(item: TmdbMovieItem): Promise<void> {
+  await dynamoDb.send(
+    new PutCommand({
+      TableName: 'TmdbMovie',
+      Item: {
+        ...item,
+        v: VERSION,
+      },
+    })
+  );
+}
+
+export async function putTmdbTvShowItem(item: TmdbTvShowItem): Promise<void> {
+  await dynamoDb.send(
+    new PutCommand({
+      TableName: 'TmdbTvShow',
+      Item: {
+        ...item,
+        v: VERSION,
+      },
+    })
+  );
 }
 
 const lightAttributes = [
@@ -100,11 +174,34 @@ export async function putImdbInfoItem(item: ImdbNzbInfo): Promise<void> {
   );
 }
 
+export async function updateTmdbBestNzb(tmdbId: number, nzbItem: NzbsuItem): Promise<void> {
+  await dynamoDb.send(
+    new UpdateCommand({
+      TableName: 'TmdbMovie',
+      Key: {id: tmdbId},
+      UpdateExpression:
+        'SET #bestNzbId = :bestNzbId, #bestNzbSize = :bestNzbSize, #bestNzbDate = :bestNzbDate, #bestNzbTitle = :bestNzbTitle',
+      ExpressionAttributeNames: {
+        '#bestNzbId': 'bestNzbId',
+        '#bestNzbSize': 'bestNzbSize',
+        '#bestNzbDate': 'bestNzbDate',
+        '#bestNzbTitle': 'bestNzbTitle',
+      },
+      ExpressionAttributeValues: {
+        ':bestNzbId': nzbItem.guid,
+        ':bestNzbSize': nzbItem.size,
+        ':bestNzbDate': nzbItem.pubTs,
+        ':bestNzbTitle': nzbItem.title,
+      },
+    })
+  );
+}
+
 export async function queryLastReleasedImdbInfoItems(limit: number): Promise<ImdbNzbInfoLight[]> {
   const res = await dynamoDb.send(
     new QueryCommand({
       TableName: 'ImdbInfo',
-      IndexName: 'NzbRegistry_All_SortedByReleaseDate',
+      IndexName: 'Nzbsu_All_SortedByReleaseDate',
       KeyConditions: {
         v: {ComparisonOperator: 'EQ', AttributeValueList: [VERSION]},
       },
@@ -116,7 +213,7 @@ export async function queryLastReleasedImdbInfoItems(limit: number): Promise<Imd
   return res.Items as ImdbNzbInfoLight[];
 }
 
-export async function insertNzbsuRegistryItems(items: NzbsuRegistryItem[]): Promise<void> {
+export async function insertNzbsuItems(items: NzbsuItem[]): Promise<void> {
   const MAX_PER_BATCH = 25;
   let index = 0;
   while (index < items.length) {
@@ -126,7 +223,7 @@ export async function insertNzbsuRegistryItems(items: NzbsuRegistryItem[]): Prom
     await dynamoDb.send(
       new BatchWriteCommand({
         RequestItems: {
-          NzbRegistry: batch.map(item => ({
+          Nzbsu: batch.map(item => ({
             PutRequest: {
               Item: {...item, v: VERSION},
             },
@@ -137,11 +234,31 @@ export async function insertNzbsuRegistryItems(items: NzbsuRegistryItem[]): Prom
   }
 }
 
-export async function getLastNzbsuRegistryItem(): Promise<NzbsuRegistryItem> {
+export async function insertNzbsuItem(item: NzbsuItem): Promise<void> {
+  await dynamoDb.send(
+    new PutCommand({
+      TableName: 'Nzbsu',
+      Item: {...item, v: VERSION},
+    })
+  );
+}
+
+export async function deleteNzbsuItem(guid: string): Promise<void> {
+  await dynamoDb.send(
+    new DeleteCommand({
+      TableName: 'Nzbsu',
+      Key: {
+        guid,
+      },
+    })
+  );
+}
+
+export async function getLastNzbsuItem(): Promise<NzbsuItem> {
   const res = await dynamoDb.send(
     new QueryCommand({
-      TableName: 'NzbRegistry',
-      IndexName: 'NzbRegistry_All_SortedByPubTs',
+      TableName: 'Nzbsu',
+      IndexName: 'Nzbsu_All_SortedByPubTs',
       KeyConditions: {
         v: {ComparisonOperator: 'EQ', AttributeValueList: [VERSION]},
       },
@@ -150,17 +267,14 @@ export async function getLastNzbsuRegistryItem(): Promise<NzbsuRegistryItem> {
     })
   );
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  return asMapArrayOrThrow(res.Items)[0]! as NzbsuRegistryItem;
+  return asMapArrayOrThrow(res.Items)[0]! as NzbsuItem;
 }
 
-export async function queryNzbsuRegistryItemsByImdb(
-  imdbId: string,
-  limit: number
-): Promise<NzbsuRegistryItem[]> {
+export async function queryNzbsuItemsByImdb(imdbId: string, limit: number): Promise<NzbsuItem[]> {
   const res = await dynamoDb.send(
     new QueryCommand({
-      TableName: 'NzbRegistry',
-      IndexName: 'NzbRegistry_ByImdbId_SortedByPubTs',
+      TableName: 'Nzbsu',
+      IndexName: 'Nzbsu_ByImdbId_SortedByPubTs',
       KeyConditions: {
         imdbId: {ComparisonOperator: 'EQ', AttributeValueList: [imdbId]},
       },
@@ -168,17 +282,17 @@ export async function queryNzbsuRegistryItemsByImdb(
       ScanIndexForward: false,
     })
   );
-  return asMapArrayOrThrow(res.Items) as NzbsuRegistryItem[];
+  return asMapArrayOrThrow(res.Items) as NzbsuItem[];
 }
 
-export async function queryNzbsuRegistryItemsBeforePubTs(
+export async function queryNzbsuItemsBeforePubTs(
   pubTs: number,
   limit: number
-): Promise<NzbsuRegistryItem[]> {
+): Promise<NzbsuItem[]> {
   const res = await dynamoDb.send(
     new QueryCommand({
-      TableName: 'NzbRegistry',
-      IndexName: 'NzbRegistry_All_SortedByPubTs',
+      TableName: 'Nzbsu',
+      IndexName: 'Nzbsu_All_SortedByPubTs',
       KeyConditions: {
         v: {ComparisonOperator: 'EQ', AttributeValueList: [VERSION]},
         pubTs: {ComparisonOperator: 'LE', AttributeValueList: [pubTs]},
@@ -187,23 +301,21 @@ export async function queryNzbsuRegistryItemsBeforePubTs(
       ScanIndexForward: false,
     })
   );
-  return asMapArrayOrThrow(res.Items) as NzbsuRegistryItem[];
+  return asMapArrayOrThrow(res.Items) as NzbsuItem[];
 }
 
-export async function updateNzbsuRegistryItemsWithImdbInfo(
+export async function updateNzbsuItemsWithImdbInfo(
   guid: string,
   id: string,
   title: string
 ): Promise<void> {
   await dynamoDb.send(
     new UpdateCommand({
-      TableName: 'NzbRegistry',
+      TableName: 'Nzbsu',
       Key: {guid},
       UpdateExpression: 'SET imdbId = :id, imdbTitle = :title',
       ExpressionAttributeValues: {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         ':id': id,
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         ':title': title,
       },
     })
@@ -213,7 +325,10 @@ export async function updateNzbsuRegistryItemsWithImdbInfo(
 export async function getParameters(): Promise<Record<string, string>> {
   const items = await dynamoDb.send(new ScanCommand({TableName: 'NzbParameters'}));
   return Object.fromEntries(
-    (items.Items ?? []).map(item => [asStringOrThrow(item.key), asStringOrThrow(item.value)])
+    (items.Items ?? []).map<[string, string]>(item => [
+      asStringOrThrow(item['key']),
+      asStringOrThrow(item['value']),
+    ])
   );
 }
 
@@ -224,22 +339,20 @@ export async function setParameter(key: string, value: string): Promise<void> {
       Key: {key},
       UpdateExpression: 'SET #value = :value',
       ExpressionAttributeValues: {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         ':value': value,
       },
       ExpressionAttributeNames: {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         '#value': 'value',
       },
     })
   );
 }
 
-export async function getNextNzbToCheck(): Promise<NzbsuRegistryItem | undefined> {
+export async function getNextNzbToCheck(): Promise<NzbsuItem | undefined> {
   const res = await dynamoDb.send(
     new QueryCommand({
-      TableName: 'NzbRegistry',
-      IndexName: 'NzbRegistry_ByHealthFailure_SortedByHealthTs',
+      TableName: 'Nzbsu',
+      IndexName: 'Nzbsu_ByHealthFailure_SortedByHealthTs',
       KeyConditions: {
         healthStatus: {ComparisonOperator: 'EQ', AttributeValueList: [HealthStatus.Unknown]},
       },
@@ -247,10 +360,10 @@ export async function getNextNzbToCheck(): Promise<NzbsuRegistryItem | undefined
       ScanIndexForward: true,
     })
   );
-  return asMapOrThrow(res.Items?.[0]) as NzbsuRegistryItem;
+  return asMapOrThrow(res.Items?.[0]) as NzbsuItem;
 }
 
-export async function updateNzbsuRegistryItemsHealth(
+export async function updateNzbsuItemsHealth(
   guid: string,
   healthStatus: string,
   healthFailed: number,
@@ -258,18 +371,17 @@ export async function updateNzbsuRegistryItemsHealth(
 ): Promise<void> {
   await dynamoDb.send(
     new UpdateCommand({
-      TableName: 'NzbRegistry',
+      TableName: 'Nzbsu',
       Key: {guid},
       UpdateExpression:
         'SET healthStatus = :healthStatus, healthTs = :healthTs, healthFailed = :healthFailed, healthSuccess = :healthSuccess',
       ExpressionAttributeValues: {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         ':healthStatus': healthStatus,
-        // eslint-disable-next-line @typescript-eslint/naming-convention
+
         ':healthTs': Date.now(),
-        // eslint-disable-next-line @typescript-eslint/naming-convention
+
         ':healthFailed': healthFailed,
-        // eslint-disable-next-line @typescript-eslint/naming-convention
+
         ':healthSuccess': healthSuccess,
       },
     })
@@ -278,9 +390,11 @@ export async function updateNzbsuRegistryItemsHealth(
 
 function parseNzbDaemonStatus(res: unknown): NzbDaemonStatus {
   const item = asMapOrThrow(res);
-  delete item.accountId_nzbId;
-  delete item.accountId_imdbId;
-  delete item.accountId_targetState;
+  /* eslint-disable @typescript-eslint/no-dynamic-delete */
+  delete item['accountId_nzbId'];
+  delete item['accountId_imdbId'];
+  delete item['accountId_targetState'];
+  /* eslint-enable @typescript-eslint/no-dynamic-delete */
   return item as NzbDaemonStatus;
 }
 
@@ -329,7 +443,6 @@ export async function queryNzbDaemonStatusByImdbId(
       TableName: 'NzbDaemonStatus',
       IndexName: 'NzbDaemonStatus_ByAccountIdImdbId',
       KeyConditions: {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         accountId_imdbId: {
           ComparisonOperator: 'EQ',
           AttributeValueList: [`${accountId}_${imdbId}`],
@@ -349,7 +462,6 @@ export async function queryNzbDaemonStatusByTargetState(
       TableName: 'NzbDaemonStatus',
       IndexName: 'NzbDaemonStatus_ByAccountIdTargetState',
       KeyConditions: {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         accountId_targetState: {
           ComparisonOperator: 'EQ',
           AttributeValueList: [`${accountId}_${targetState}`],
@@ -369,12 +481,10 @@ export async function updateNzbDaemonStatusTargetState(
     new UpdateCommand({
       TableName: 'NzbDaemonStatus',
       Key: {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         accountId_nzbId: `${accountId}_${nzbId}`,
       },
       UpdateExpression: 'SET targetState = :targetState',
       ExpressionAttributeValues: {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         ':targetState': targetState,
       },
     })
@@ -390,12 +500,10 @@ export async function updateNzbDaemonStatusDownloadStatus(
     new UpdateCommand({
       TableName: 'NzbDaemonStatus',
       Key: {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         accountId_nzbId: `${accountId}_${nzbId}`,
       },
       UpdateExpression: 'SET downloadStatus = :downloadStatus',
       ExpressionAttributeValues: {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         ':downloadStatus': downloadStatus,
       },
     })
@@ -415,7 +523,6 @@ export async function insertNzbDaemonStatus(
     new PutCommand({
       TableName: 'NzbDaemonStatus',
       Item: {
-        /* eslint-disable @typescript-eslint/naming-convention */
         accountId_nzbId: `${accountId}_${nzbId}`,
         accountId_imdbId: `${accountId}_${imdbId}`,
         accountId_targetState: `${accountId}_${targetState}`,
@@ -425,7 +532,6 @@ export async function insertNzbDaemonStatus(
         nzbSize,
         imdbId,
         targetState,
-        /* eslint-enable @typescript-eslint/naming-convention */
       },
     })
   );
@@ -447,15 +553,15 @@ export async function updateNzbGetStatus(accountId: string, status: NzbGetStatus
 
 export async function getNzbGetStatus(accountId: string): Promise<NzbGetStatus> {
   const res = await dynamoDb.send(new GetCommand({TableName: 'NzbgetStatus', Key: {accountId}}));
-  return (res.Item?.status as NzbGetStatus | undefined) ?? {downloadRate: 0};
+  return res.Item?.['status'] ?? {downloadRate: 0};
 }
 
 // export async function updateHealthTs(): Promise<void> {
 //   const items = ((
 //     await dynamoDb.send(
 //       new QueryCommand({
-//         TableName: 'NzbRegistry',
-//         IndexName: 'NzbRegistry_ByHealthFailure_SortedByHealthTs',
+//         TableName: 'Nzbsu',
+//         IndexName: 'Nzbsu_ByHealthFailure_SortedByHealthTs',
 //         KeyConditions: {
 //           healthStatus: {ComparisonOperator: 'EQ', AttributeValueList: [HealthStatus.Unhealthy]},
 //         },
@@ -467,7 +573,7 @@ export async function getNzbGetStatus(accountId: string): Promise<NzbGetStatus> 
 //     // eslint-disable-next-line no-await-in-loop
 //     await dynamoDb.send(
 //       new UpdateCommand({
-//         TableName: 'NzbRegistry',
+//         TableName: 'Nzbsu',
 //         Key: {guid: item.guid},
 //         UpdateExpression: 'SET healthTs = :healthTs',
 //         ExpressionAttributeValues: {
@@ -489,7 +595,7 @@ export async function getNzbGetStatus(accountId: string): Promise<NzbGetStatus> 
 //     // eslint-disable-next-line no-await-in-loop
 //     const res = await dynamoDb.send(
 //       new ScanCommand({
-//         TableName: 'NzbRegistry',
+//         TableName: 'Nzbsu',
 //         ExclusiveStartKey: lastEvaluatedKey,
 //       })
 //     );
@@ -501,7 +607,7 @@ export async function getNzbGetStatus(accountId: string): Promise<NzbGetStatus> 
 //       // eslint-disable-next-line no-await-in-loop
 //       await dynamoDb.send(
 //         new UpdateCommand({
-//           TableName: 'NzbRegistry',
+//           TableName: 'Nzbsu',
 //           Key: {guid: item.guid},
 //           UpdateExpression: 'SET healthTs = :healthTs',
 //           ExpressionAttributeValues: {
@@ -518,3 +624,4 @@ export async function getNzbGetStatus(accountId: string): Promise<NzbGetStatus> 
 //     }
 //   }
 // }
+/* eslint-enable @typescript-eslint/naming-convention */
