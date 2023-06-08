@@ -1,12 +1,14 @@
 {
   "name": "nzb",
   "license": "UNLICENSED",
+  "type": "module",
   "scripts": {
     "setup": "node ./setup.js",
     "deploy": "node ./deploy.js",
-    "build": "node ./build.mjs",
-    "watch": "node ./build.mjs --watch"
+    "build": "node ./build.js",
+    "watch": "node ./build.js --watch"
   },
+  "prettier": "@matthis/prettier-config",
   "eslintConfig": {
     "ignorePatterns": [
       "**/*.js"
@@ -20,11 +22,11 @@
     "@matthis/tsconfig-lib": "1.1.7",
     "@matthis/tsconfig-node": "1.1.7",
     "@matthis/tsconfig-web": "1.1.7",
-    "@matthis/webpack-lambda": "1.2.3",
-    "@matthis/webpack-lib": "1.2.3",
-    "@matthis/webpack-node-script": "1.2.3",
-    "@matthis/webpack-runner": "1.1.2",
-    "@matthis/webpack-web": "1.2.3",
+    "@matthis/webpack-lambda": "1.2.9",
+    "@matthis/webpack-lib": "1.2.9",
+    "@matthis/webpack-node-script": "1.2.9",
+    "@matthis/webpack-runner": "1.1.7",
+    "@matthis/webpack-web": "1.2.9",
     "typescript": "4.8.x"
   }
 }

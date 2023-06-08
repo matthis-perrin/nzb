@@ -24,7 +24,7 @@ import {
   TmdbMovieItem,
   TmdbTvShowItem,
 } from '@shared/models';
-import {asMapArrayOrThrow, asMapOrThrow, asStringOrThrow} from '@shared/type_utils';
+import {asMapArrayOrThrow, asMapOrThrow} from '@shared/type_utils';
 
 const dynamoDb = DynamoDBDocumentClient.from(new DynamoDBClient({region: 'eu-west-3'}), {
   marshallOptions: {removeUndefinedValues: true},
@@ -317,32 +317,6 @@ export async function updateNzbsuItemsWithImdbInfo(
       ExpressionAttributeValues: {
         ':id': id,
         ':title': title,
-      },
-    })
-  );
-}
-
-export async function getParameters(): Promise<Record<string, string>> {
-  const items = await dynamoDb.send(new ScanCommand({TableName: 'NzbParameters'}));
-  return Object.fromEntries(
-    (items.Items ?? []).map<[string, string]>(item => [
-      asStringOrThrow(item['key']),
-      asStringOrThrow(item['value']),
-    ])
-  );
-}
-
-export async function setParameter(key: string, value: string): Promise<void> {
-  await dynamoDb.send(
-    new UpdateCommand({
-      TableName: 'NzbParameters',
-      Key: {key},
-      UpdateExpression: 'SET #value = :value',
-      ExpressionAttributeValues: {
-        ':value': value,
-      },
-      ExpressionAttributeNames: {
-        '#value': 'value',
       },
     })
   );

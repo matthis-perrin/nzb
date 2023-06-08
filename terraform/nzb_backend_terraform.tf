@@ -14,14 +14,34 @@ data "aws_iam_policy_document" "nzb_backend_lambda_extra_role" {
   }
 }
 
+resource "aws_s3_object" "nzb_backend_archive" {
+  bucket       = aws_s3_bucket.code.id
+  key          = "nzb_backend/dist.zip"
+  content_base64 = "UEsDBBQACAAIAGaKwlYAAAAAAAAAADYAAAAIACAAaW5kZXguanNVVA0AB3AIemRyCHpkcAh6ZHV4CwABBPUBAAAEFAAAAEutKMgvKinWy0jMS8lJLVKwVUgsrsxLVkgrzUsuyczPU9DQVKjmUlAoSi0pLcpTUFe35qq15gIAUEsHCP0ak1o4AAAANgAAAFBLAQIUAxQACAAIAGaKwlb9GpNaOAAAADYAAAAIACAAAAAAAAAAAACkgQAAAABpbmRleC5qc1VUDQAHcAh6ZHIIemRwCHpkdXgLAAEE9QEAAAQUAAAAUEsFBgAAAAABAAEAVgAAAI4AAAAAAA=="
+}
+
 resource "aws_lambda_function" "nzb_backend" {
   function_name     = "nzb-nzb_backend"
-  s3_bucket         = aws_s3_bucket.code.id
-  s3_key            = aws_s3_bucket_object.nzb_backend_archive.id
-  source_code_hash  = data.archive_file.nzb_backend_archive.output_sha
+  s3_bucket         = aws_s3_object.nzb_backend_archive.bucket
+  s3_key            = aws_s3_object.nzb_backend_archive.key
   handler           = "index.handler"
   runtime           = "nodejs14.x"
   role              = aws_iam_role.nzb_backend_lambda_exec.arn
+}
+
+output "nzb_backend_function_name" {
+  value       = aws_lambda_function.nzb_backend.function_name
+  description = "Function name of the \"nzb-nzb_backend\" lambda"
+}
+
+resource "aws_lambda_function_url" "nzb_backend" {
+  function_name      = aws_lambda_function.nzb_backend.function_name
+  authorization_type = "NONE"
+}
+
+output "nzb_backend_function_url" {
+  value       = aws_lambda_function_url.nzb_backend.function_url
+  description = "Function url of the \"nzb-nzb_backend\" lambda"
 }
 
 resource "aws_iam_role" "nzb_backend_lambda_exec" {
@@ -62,92 +82,4 @@ resource "aws_iam_role" "nzb_backend_lambda_exec" {
     name = "nzb-nzb_backend-extra-role"
     policy = data.aws_iam_policy_document.nzb_backend_lambda_extra_role.json
   }
-}
-
-data "archive_file" "nzb_backend_archive" {
-  type        = "zip"
-  source_dir  = "../nzb_backend/dist"
-  output_path = "./archives/nzb_backend.zip"
-}
-
-resource "aws_s3_bucket_object" "nzb_backend_archive" {
-  bucket       = aws_s3_bucket.code.id
-  key          = "nzb_backend/dist.zip"
-  source       = data.archive_file.nzb_backend_archive.output_path
-  etag         = data.archive_file.nzb_backend_archive.output_sha
-}
-
-output "nzb_backend_api_url" {
-  value = aws_api_gateway_deployment.nzb_backend.invoke_url
-  description = "URL where the \"nzb-nzb_backend\" lambda api can be called."
-}
-
-resource "aws_api_gateway_rest_api" "nzb_backend" {
-  name        = "nzb-nzb_backend-RestAPI"
-  description = "Rest API for the \"nzb-nzb_backend\" app"
-}
-
-resource "aws_api_gateway_resource" "nzb_backend" {
-  rest_api_id = aws_api_gateway_rest_api.nzb_backend.id
-  parent_id   = aws_api_gateway_rest_api.nzb_backend.root_resource_id
-  path_part   = "{proxy+}"
-}
-  
-resource "aws_api_gateway_method" "nzb_backend" {
-  rest_api_id   = aws_api_gateway_rest_api.nzb_backend.id
-  resource_id   = aws_api_gateway_resource.nzb_backend.id
-  http_method   = "ANY"
-  authorization = "NONE"
-}
-
-resource "aws_api_gateway_method" "nzb_backend_root" {
-    rest_api_id   = aws_api_gateway_rest_api.nzb_backend.id
-    resource_id   = aws_api_gateway_rest_api.nzb_backend.root_resource_id
-    http_method   = "ANY"
-    authorization = "NONE"
-}
-
-resource "aws_api_gateway_integration" "nzb_backend" {
-  rest_api_id = aws_api_gateway_rest_api.nzb_backend.id
-  resource_id = aws_api_gateway_method.nzb_backend.resource_id
-  http_method = aws_api_gateway_method.nzb_backend.http_method
-  
-  integration_http_method = "POST"
-  type                    = "AWS_PROXY"
-  uri                     = aws_lambda_function.nzb_backend.invoke_arn
-}
-
-resource "aws_api_gateway_integration" "nzb_backend_root" {
-  rest_api_id = aws_api_gateway_rest_api.nzb_backend.id
-  resource_id = aws_api_gateway_method.nzb_backend_root.resource_id
-  http_method = aws_api_gateway_method.nzb_backend_root.http_method
-
-  integration_http_method = "POST"
-  type                    = "AWS_PROXY"
-  uri                     = aws_lambda_function.nzb_backend.invoke_arn
-}
-
-resource "aws_api_gateway_deployment" "nzb_backend" {
-  depends_on = [
-    aws_api_gateway_integration.nzb_backend,
-    aws_api_gateway_integration.nzb_backend_root,
-  ]
-  rest_api_id = aws_api_gateway_rest_api.nzb_backend.id
-  stage_name  = "prod"
-
-  triggers = {
-    redeployment = sha1(jsonencode(aws_api_gateway_integration.nzb_backend))
-  }
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-resource "aws_lambda_permission" "nzb_backend" {
-  statement_id  = "AllowAPIGatewayInvoke"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.nzb_backend.function_name
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_api_gateway_rest_api.nzb_backend.execution_arn}/*/*"
 }

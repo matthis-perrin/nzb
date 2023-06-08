@@ -1,5 +1,6 @@
 import request from 'request';
 
+import {IMDB_API_KEY} from '@shared/constant';
 import {ImdbInfo} from '@shared/models';
 import {
   asMap,
@@ -11,8 +12,6 @@ import {
   asString,
   asStringOrThrow,
 } from '@shared/type_utils';
-
-import {IMDB_API_KEY} from '@src/constant';
 
 const OK = 200;
 

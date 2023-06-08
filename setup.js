@@ -1,5 +1,6 @@
-const path = require('path');
-const {execSync, exec} = require('child_process');
+import {join} from 'path';
+import {execSync, exec} from 'child_process';
+import {readdir} from 'fs/promises';
 
 //
 
@@ -56,14 +57,21 @@ async function installNodeModulesAtPath(path) {
 }
 
 async function installNodeModules() {
+  const root = process.cwd();
+  const rootEnt = await readdir(root, {withFileTypes: true});
+  const dirs = await Promise.all(
+    rootEnt
+      .filter(ent => ent.isDirectory() && ent.name !== 'node_modules')
+      .map(async ent => {
+        const files = await readdir(join(root, ent.name));
+        const hasPackageJson = files.includes('package.json');
+        return {name: ent.name, hasPackageJson};
+      })
+  );
+  const dirsToInstall = dirs.filter(d => d.hasPackageJson).map(d => d.name);
   await Promise.all([
-    installNodeModulesAtPath(process.cwd()),
-    installNodeModulesAtPath(path.join(process.cwd(), 'shared')),
-    installNodeModulesAtPath(path.join(process.cwd(), 'nzb_nzbsu')),
-    installNodeModulesAtPath(path.join(process.cwd(), 'nzb_tmdb')),
-    installNodeModulesAtPath(path.join(process.cwd(), 'nzb_nzbget_daemon')),
-    installNodeModulesAtPath(path.join(process.cwd(), 'nzb_frontend')),
-    installNodeModulesAtPath(path.join(process.cwd(), 'nzb_backend')),
+    installNodeModulesAtPath(root),
+    ...dirsToInstall.map(dir => installNodeModulesAtPath(join(root, dir))),
   ]);
 }
 
@@ -83,4 +91,3 @@ run()
     console.log('Fix the issue then run `node setup.js` manually');
   })
   .catch(() => process.exit(13));
-

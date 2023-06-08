@@ -213,17 +213,6 @@ resource "aws_dynamodb_table" "imdb_info_table" {
   }
 }
 
-resource "aws_dynamodb_table" "nzb_parameters_table" {
-  name           = "NzbParameters"
-  billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "key"
-
-  attribute {
-    name = "key"
-    type = "S"
-  }
-}
-
 resource "aws_dynamodb_table" "nzb_daemon_status_table" {
   name           = "NzbDaemonStatus"
   billing_mode   = "PAY_PER_REQUEST"

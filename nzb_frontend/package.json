@@ -15,8 +15,7 @@
   "devDependencies": {
     "@types/react": "17.0.x",
     "@types/react-dom": "17.0.x",
-    "@types/styled-components": "5.1.x",
-    "webpack-cli": "^5.1.1"
+    "@types/styled-components": "5.1.x"
   },
   "dependencies": {
     "react": "17.0.x",

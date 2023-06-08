@@ -2,14 +2,14 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 3.0"
+      version = "~> 5.1"
     }
   }
 }
 
 provider "aws" {
   region  = "eu-west-3"
-  shared_credentials_file = "./.aws-credentials"
+  shared_credentials_files = ["./.aws-credentials"]
   default_tags {
     tags = {
       Project = "nzb"
@@ -17,13 +17,17 @@ provider "aws" {
   }
 }
 
+data "aws_region" "current" {}
+output "region" {
+  value = data.aws_region.current.id
+}
+
 resource "aws_s3_bucket" "code" {
   bucket_prefix = "nzb-"
 }
 
-resource "aws_s3_bucket_acl" "code_bucket_acl" {
-  bucket = aws_s3_bucket.code.id
-  acl    = "private"
+output "code_bucket" {
+  value = aws_s3_bucket.code.id
 }
 
 data "aws_iam_policy_document" "cloudfront_access_to_code" {
