@@ -34,7 +34,9 @@ function getProjects() {
 
 async function run() {
   // Build
+  console.log('--------------------------------------------------------------------------------')
   execSync(`yarn build`, {stdio: 'inherit'});
+  console.log('--------------------------------------------------------------------------------')
 
   // Get terraform outputs
   checkTerraformCredentials();
@@ -44,11 +46,12 @@ async function run() {
   }
   const {region, code_bucket} = outputs;
 
-  // Deploy each projects
+  // Deploy each lambda
   const projects = getProjects();
   const lambdaProjects = projects.map(p => p.lambdaName).filter(Boolean);
   for (const lambdaName of lambdaProjects) {
-    console.log(`Deploying ${lambdaName}`);
+    const lambdaUrl = outputs[`${lambdaName}_function_url`];
+    console.log(`Deploying lambda ${lambdaName}`, lambdaUrl);
     const tmp = tmpdir();
     const zipPath = join(tmp, randomUUID()) + '.zip';
     execSync(`pushd ${lambdaName}/dist; zip -r ${zipPath} *`);
@@ -61,6 +64,18 @@ async function run() {
       } --s3-bucket ${code_bucket} --s3-key ${lambdaName}/dist.zip --region ${region} --publish --no-cli-pager`
     );
   }
+
+  // Deploy each website
+  const websiteProjects = projects.map(p => p.websiteName).filter(Boolean);
+  for (const websiteName of websiteProjects) {
+    const websiteUrl = outputs[`${websiteName}_cloudfront_domain_name`];
+    console.log(`Deploying website ${websiteName}`, websiteUrl);
+    execSync(
+      `AWS_CONFIG_FILE=terraform/.aws-credentials aws s3 sync ${websiteName}/dist s3://${code_bucket}/${websiteName}`
+    );
+  }
+
+  console.log('--------------------------------------------------------------------------------')
 }
 
 run().catch(err => {

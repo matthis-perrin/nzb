@@ -1,8 +1,8 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
+import {StrictMode} from 'react';
+import {createRoot} from 'react-dom/client';
 import {createGlobalStyle} from 'styled-components';
 
-import {App} from './app';
+import {App} from '@src/app';
 
 const GlobalCss = createGlobalStyle`
   html, body {
@@ -17,10 +17,12 @@ const GlobalCss = createGlobalStyle`
   }
 `;
 
-ReactDOM.render(
-  <React.StrictMode>
-    <App />
-    <GlobalCss />
-  </React.StrictMode>,
-  document.getElementById('root')
-);
+const container = document.getElementById('root');
+if (container) {
+  createRoot(container).render(
+    <StrictMode>
+      <App />
+      <GlobalCss />
+    </StrictMode>
+  );
+}

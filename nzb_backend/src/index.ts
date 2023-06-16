@@ -1,12 +1,20 @@
+import {NODE_ENV, NZB_FRONTEND_CLOUDFRONT_DOMAIN_NAME} from '@shared/env';
+
 interface LambdaEvent {
-  path: string;
-  headers: Record<string, string>;
-  httpMethod: string;
-  body: string | null;
+  headers: Record<string, string | string[]>;
+  queryStringParameters?: Record<string, string>;
+  requestContext: {
+    http: {
+      method: string;
+      path: string;
+    };
+    timeEpoch: number;
+  };
+  body?: string;
 }
 
 interface LambdaResponse {
-  headers?: Record<string, string>;
+  headers?: Record<string, string | undefined>;
   statusCode: number;
   body: string;
 }
@@ -17,7 +25,7 @@ function normalizePath(path: string): string {
   return withoutTrailing;
 }
 
-function parseBody(body: string | null): Record<string, unknown> {
+function parseBody(body?: string | null): Record<string, unknown> {
   let jsonBody = {};
   if (typeof body === 'string') {
     try {
@@ -29,24 +37,42 @@ function parseBody(body: string | null): Record<string, unknown> {
   return jsonBody;
 }
 
+const allowedOrigin = new Set([
+  `http${NODE_ENV === 'development' ? '' : 's'}://${NZB_FRONTEND_CLOUDFRONT_DOMAIN_NAME}`,
+]);
+
 export async function handler(event: LambdaEvent): Promise<LambdaResponse> {
-  const method = event.httpMethod.toUpperCase();
-  const path = normalizePath(event.path);
+  const {headers, requestContext} = event;
+  const origin =
+    (Array.isArray(headers['origin']) ? headers['origin'][0] : headers['origin']) ?? '';
+  const {http} = requestContext;
+  const method = http.method.toUpperCase();
+  const path = normalizePath(http.path);
   const body = parseBody(event.body);
+
+  await Promise.resolve();
 
   if (method === 'GET' && (path === '' || path === '/' || path === '/index.html')) {
     return {
       statusCode: 200,
       headers: {
         'Content-Type': 'text/html',
+        'Access-Control-Allow-Origin': allowedOrigin.has(origin) ? origin : undefined,
       },
-      // eslint-disable-next-line node/no-process-env
-      body: process.env.INDEX_HTML ?? '',
+      body: `<html><body><h1>INDEX HTML</h1><pre>${JSON.stringify(
+        event,
+        undefined,
+        2
+      )}</pre></body></html>`,
     };
   }
 
   return {
-    statusCode: 404,
-    body: '',
+    statusCode: 200,
+    body: JSON.stringify({
+      method,
+      path,
+      body,
+    }),
   };
 }
