@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 function notUndefined<T>(val: T | undefined): val is T {
   return val !== undefined;
 }
@@ -31,14 +30,14 @@ export function neverHappens(value: never, errorMessage?: string): never {
   throw new Error(errorMessage);
 }
 
-export type AnyMap = Record<string, any>;
-export function asMap(value: any): AnyMap | undefined;
-export function asMap(value: any, defaultValue: AnyMap): AnyMap;
-export function asMap(value: any, defaultValue?: AnyMap): AnyMap | undefined {
+export type AnyMap = Record<string, unknown>;
+export function asMap(value: unknown): AnyMap | undefined;
+export function asMap(value: unknown, defaultValue: AnyMap): AnyMap;
+export function asMap(value: unknown, defaultValue?: AnyMap): AnyMap | undefined {
   // eslint-disable-next-line no-null/no-null
   return typeof value === 'object' && value !== null ? (value as AnyMap) : defaultValue;
 }
-export function asMapOrThrow(value: any): Record<string, any> {
+export function asMapOrThrow(value: unknown): Record<string, unknown> {
   const valueAsMap = asMap(value);
   if (valueAsMap === undefined) {
     throw new Error(`Invalid value: \`${value}\` is not a map`);
@@ -46,12 +45,12 @@ export function asMapOrThrow(value: any): Record<string, any> {
   return valueAsMap;
 }
 
-export function asString(value: any): string | undefined;
-export function asString(value: any, defaultValue: string): string;
-export function asString(value: any, defaultValue?: string): string | undefined {
+export function asString(value: unknown): string | undefined;
+export function asString(value: unknown, defaultValue: string): string;
+export function asString(value: unknown, defaultValue?: string): string | undefined {
   return typeof value === 'string' ? value : defaultValue;
 }
-export function asStringOrThrow(value: any): string {
+export function asStringOrThrow(value: unknown): string {
   const valueAsString = asString(value);
   if (valueAsString === undefined) {
     throw new Error(`Invalid value: \`${value}\` is not a string`);
@@ -59,21 +58,21 @@ export function asStringOrThrow(value: any): string {
   return valueAsString;
 }
 
-export function asArray<T = any>(value: any): T[] | undefined;
-export function asArray<T = any>(value: any, defaultValue: T[]): T[];
-export function asArray<T = any>(value: any, defaultValue?: T[]): T[] | undefined {
+export function asArray<T = unknown>(value: unknown): T[] | undefined;
+export function asArray<T = unknown>(value: unknown, defaultValue: T[]): T[];
+export function asArray<T = unknown>(value: unknown, defaultValue?: T[]): T[] | undefined {
   return Array.isArray(value) ? (value as T[]) : defaultValue;
 }
-export function asArrayOrThrow<T = any>(value: any): T[] {
+export function asArrayOrThrow<T = unknown>(value: unknown): T[] {
   if (!Array.isArray(value)) {
     throw new Error(`Invalid value: \`${value}\` is not an array`);
   }
   return value as T[];
 }
 
-export function asStringArray(value: any): string[] | undefined;
-export function asStringArray(value: any, defaultValue: string[]): string[];
-export function asStringArray(value: any, defaultValue?: string[]): string[] | undefined {
+export function asStringArray(value: unknown): string[] | undefined;
+export function asStringArray(value: unknown, defaultValue: string[]): string[];
+export function asStringArray(value: unknown, defaultValue?: string[]): string[] | undefined {
   const arr = asArray(value);
   if (arr === undefined) {
     return defaultValue;
@@ -81,23 +80,23 @@ export function asStringArray(value: any, defaultValue?: string[]): string[] | u
   return removeUndefined(arr.map(s => asString(s)));
 }
 
-export function asMapArray(value: any): AnyMap[] | undefined;
-export function asMapArray(value: any, defaultValue: AnyMap[]): AnyMap[];
-export function asMapArray(value: any, defaultValue?: AnyMap[]): AnyMap[] | undefined {
+export function asMapArray(value: unknown): AnyMap[] | undefined;
+export function asMapArray(value: unknown, defaultValue: AnyMap[]): AnyMap[];
+export function asMapArray(value: unknown, defaultValue?: AnyMap[]): AnyMap[] | undefined {
   const arr = asArray(value);
   if (arr === undefined) {
     return defaultValue;
   }
   return removeUndefined(arr.map(s => asMap(s)));
 }
-export function asMapArrayOrThrow(value: any): AnyMap[] {
+export function asMapArrayOrThrow(value: unknown): AnyMap[] {
   const arr = asArrayOrThrow(value);
   return arr.map(s => asMapOrThrow(s));
 }
 
-export function asNumber(value: any): number | undefined;
-export function asNumber(value: any, defaultValue: number): number;
-export function asNumber(value: any, defaultValue?: number): number | undefined {
+export function asNumber(value: unknown): number | undefined;
+export function asNumber(value: unknown, defaultValue: number): number;
+export function asNumber(value: unknown, defaultValue?: number): number | undefined {
   if (typeof value === 'number') {
     return !isNaN(value) ? value : defaultValue;
   }
@@ -111,7 +110,7 @@ export function asNumber(value: any, defaultValue?: number): number | undefined 
   }
   return defaultValue;
 }
-export function asNumberOrThrow(value: any): number {
+export function asNumberOrThrow(value: unknown): number {
   const valueAsNumber = asNumber(value);
   if (valueAsNumber === undefined) {
     throw new Error(`Invalid value: \`${value}\` is not a number`);
@@ -119,9 +118,9 @@ export function asNumberOrThrow(value: any): number {
   return valueAsNumber;
 }
 
-export function asBoolean(value: any): boolean | undefined;
-export function asBoolean(value: any, defaultValue: boolean): boolean;
-export function asBoolean(value: any, defaultValue?: boolean): boolean | undefined {
+export function asBoolean(value: unknown): boolean | undefined;
+export function asBoolean(value: unknown, defaultValue: boolean): boolean;
+export function asBoolean(value: unknown, defaultValue?: boolean): boolean | undefined {
   if (typeof value === 'boolean') {
     return value;
   }
@@ -139,7 +138,7 @@ export function asBoolean(value: any, defaultValue?: boolean): boolean | undefin
   return defaultValue;
 }
 
-export function asBooleanOrThrow(value: any): boolean {
+export function asBooleanOrThrow(value: unknown): boolean {
   const valueAsBoolean = asBoolean(value);
   if (valueAsBoolean === undefined) {
     throw new Error(`Invalid value: \`${value}\` is not a boolean`);
@@ -147,24 +146,21 @@ export function asBooleanOrThrow(value: any): boolean {
   return valueAsBoolean;
 }
 
-// export function asDate(value: any): Date | undefined;
-// export function asDate(value: any, defaultValue: Date): Date;
-// export function asDate(value: any, defaultValue?: Date): Date | undefined {
+// export function asDate(value: unknown): Date | undefined;
+// export function asDate(value: unknown, defaultValue: Date): Date;
+// export function asDate(value: unknown, defaultValue?: Date): Date | undefined {
 //   if (typeof value === 'number') {
 //     return new Date(value);
 //   }
 //   return value instanceof Date ? value : defaultValue;
 // }
 
-/* eslint-enable @typescript-eslint/no-explicit-any */
-
 export function isNull<T>(val: T | null): val is null {
   // eslint-disable-next-line no-null/no-null
   return val === null;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function errorAsString(err: any): string {
+export function errorAsString(err: unknown): string {
   const errorMap = asMap(err);
   if (errorMap === undefined) {
     return asString(err) ?? String(err);
