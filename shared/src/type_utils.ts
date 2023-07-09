@@ -40,7 +40,7 @@ export function asMap(value: unknown, defaultValue?: AnyMap): AnyMap | undefined
 export function asMapOrThrow(value: unknown): Record<string, unknown> {
   const valueAsMap = asMap(value);
   if (valueAsMap === undefined) {
-    throw new Error(`Invalid value: \`${value}\` is not a map`);
+    throw new Error(`Invalid value: \`${String(value)}\` is not a map`);
   }
   return valueAsMap;
 }
@@ -53,7 +53,7 @@ export function asString(value: unknown, defaultValue?: string): string | undefi
 export function asStringOrThrow(value: unknown): string {
   const valueAsString = asString(value);
   if (valueAsString === undefined) {
-    throw new Error(`Invalid value: \`${value}\` is not a string`);
+    throw new Error(`Invalid value: \`${String(value)}\` is not a string`);
   }
   return valueAsString;
 }
@@ -65,7 +65,7 @@ export function asArray<T = unknown>(value: unknown, defaultValue?: T[]): T[] | 
 }
 export function asArrayOrThrow<T = unknown>(value: unknown): T[] {
   if (!Array.isArray(value)) {
-    throw new Error(`Invalid value: \`${value}\` is not an array`);
+    throw new Error(`Invalid value: \`${String(value)}\` is not an array`);
   }
   return value as T[];
 }
@@ -113,7 +113,7 @@ export function asNumber(value: unknown, defaultValue?: number): number | undefi
 export function asNumberOrThrow(value: unknown): number {
   const valueAsNumber = asNumber(value);
   if (valueAsNumber === undefined) {
-    throw new Error(`Invalid value: \`${value}\` is not a number`);
+    throw new Error(`Invalid value: \`${String(value)}\` is not a number`);
   }
   return valueAsNumber;
 }
@@ -141,9 +141,27 @@ export function asBoolean(value: unknown, defaultValue?: boolean): boolean | und
 export function asBooleanOrThrow(value: unknown): boolean {
   const valueAsBoolean = asBoolean(value);
   if (valueAsBoolean === undefined) {
-    throw new Error(`Invalid value: \`${value}\` is not a boolean`);
+    throw new Error(`Invalid value: \`${String(value)}\` is not a boolean`);
   }
   return valueAsBoolean;
+}
+export function asJson(value: string): AnyMap | undefined;
+export function asJson(value: string, defaultValue: AnyMap): AnyMap;
+export function asJson(value: string, defaultValue?: AnyMap): AnyMap | undefined {
+  try {
+    const json = JSON.parse(value);
+    const res = asMap(json);
+    return res ?? defaultValue;
+  } catch {
+    return defaultValue;
+  }
+}
+export function asJsonOrThrow(value: string): AnyMap {
+  const valueAsJson = asJson(value);
+  if (valueAsJson === undefined) {
+    throw new Error(`Invalid value: \`${String(value)}\` is not a valid JSON string of a map`);
+  }
+  return valueAsJson;
 }
 
 // export function asDate(value: unknown): Date | undefined;

@@ -267,7 +267,7 @@ export async function getLastNzbsuItem(): Promise<NzbsuItem> {
     })
   );
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  return asMapArrayOrThrow(res.Items)[0]! as NzbsuItem;
+  return asMapArrayOrThrow(res.Items)[0]! as unknown as NzbsuItem;
 }
 
 export async function queryNzbsuItemsByImdb(imdbId: string, limit: number): Promise<NzbsuItem[]> {
@@ -282,7 +282,7 @@ export async function queryNzbsuItemsByImdb(imdbId: string, limit: number): Prom
       ScanIndexForward: false,
     })
   );
-  return asMapArrayOrThrow(res.Items) as NzbsuItem[];
+  return asMapArrayOrThrow(res.Items) as unknown as NzbsuItem[];
 }
 
 export async function queryNzbsuItemsBeforePubTs(
@@ -301,7 +301,7 @@ export async function queryNzbsuItemsBeforePubTs(
       ScanIndexForward: false,
     })
   );
-  return asMapArrayOrThrow(res.Items) as NzbsuItem[];
+  return asMapArrayOrThrow(res.Items) as unknown as NzbsuItem[];
 }
 
 export async function updateNzbsuItemsWithImdbInfo(
@@ -334,7 +334,7 @@ export async function getNextNzbToCheck(): Promise<NzbsuItem | undefined> {
       ScanIndexForward: true,
     })
   );
-  return asMapOrThrow(res.Items?.[0]) as NzbsuItem;
+  return asMapOrThrow(res.Items?.[0]) as unknown as NzbsuItem;
 }
 
 export async function updateNzbsuItemsHealth(
@@ -369,7 +369,7 @@ function parseNzbDaemonStatus(res: unknown): NzbDaemonStatus {
   delete item['accountId_imdbId'];
   delete item['accountId_targetState'];
   /* eslint-enable @typescript-eslint/no-dynamic-delete */
-  return item as NzbDaemonStatus;
+  return item as unknown as NzbDaemonStatus;
 }
 
 // export async function batchGetNzbDaemonStatus(

@@ -14,8 +14,19 @@
       "@matthis/eslint-config-lib"
     ],
     "rules": {
-      "no-console": "off",
-      "@typescript-eslint/naming-convention": "off"
+      "no-restricted-imports": [
+        "warn",
+        {
+          "patterns": [
+            {
+              "group": [
+                "@src/*"
+              ],
+              "message": "Import with @shared/ instead"
+            }
+          ]
+        }
+      ]
     }
   },
   "devDependencies": {

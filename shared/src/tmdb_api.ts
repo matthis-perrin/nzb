@@ -28,7 +28,7 @@ export async function getTmdbInfoFromApi(imdbId: string): Promise<TmdbInfo> {
         } else {
           if (resp.statusCode !== OK) {
             console.log(resp.statusCode, url, body);
-            throw new Error(`TMDB API failure (getTmdbInfo movie): ${body}`);
+            throw new Error(`TMDB API failure (getTmdbInfo movie): ${String(body)}`);
           }
           // Parse results
           const res = JSON.parse(asStringOrThrow(body));
@@ -47,7 +47,7 @@ export async function getTmdbInfoFromApi(imdbId: string): Promise<TmdbInfo> {
         } else {
           if (resp.statusCode !== OK) {
             console.log(resp.statusCode, url, body);
-            throw new Error(`TMDB API failure (getTmdbInfo tv): ${body}`);
+            throw new Error(`TMDB API failure (getTmdbInfo tv): ${String(body)}`);
           }
           // Parse results
           const res = JSON.parse(asStringOrThrow(body));
@@ -69,7 +69,7 @@ async function getTmdbIdFromApi(imdbId: string): Promise<{id: number; type: 'mov
       } else {
         if (resp.statusCode !== OK) {
           console.log(resp.statusCode, url, body);
-          throw new Error(`TMDB API failure (getTmdbId): ${body}`);
+          throw new Error(`TMDB API failure (getTmdbId): ${String(body)}`);
         }
 
         // Parse results

@@ -33,7 +33,7 @@ export async function nzbsuGetJson(
             }
             resolve(parseNzbsuRegistryItems(JSON.parse(content)));
           } catch (err: unknown) {
-            reject(new Error(`Response is not a valid JSON (${String(err)}): "${body}"`));
+            reject(new Error(`Response is not a valid JSON (${String(err)}): "${String(body)}"`));
           }
         }
       }

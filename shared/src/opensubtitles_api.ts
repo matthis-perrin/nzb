@@ -35,7 +35,7 @@ export async function openSubtitlesSearch(query: string): Promise<string | undef
         } else {
           if (resp.statusCode !== OK) {
             console.log(resp.statusCode, url, body);
-            throw new Error(`OpenSubtitles API failure (search): ${body}`);
+            throw new Error(`OpenSubtitles API failure (search): ${String(body)}`);
           }
           // Parse results
           const res = asMapArrayOrThrow(asMapOrThrow(JSON.parse(asStringOrThrow(body)))['data']);

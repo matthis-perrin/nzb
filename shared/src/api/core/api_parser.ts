@@ -1,12 +1,12 @@
-import {BadRequestError} from '@shared/api/api_errors';
-import {Schema, SchemaToInterface} from '@shared/api/api_schema';
+import {BadRequestError} from '@shared/api/core/api_errors';
+import {Schema, SchemaToType} from '@shared/api/core/api_schema';
 import {asArray, asBoolean, asMap, asNumber, asString, neverHappens} from '@shared/type_utils';
 
 export function parseSchema(
   value: unknown,
   schema?: Schema,
   parameterName?: string
-): SchemaToInterface<Schema> {
+): SchemaToType<Schema> {
   if (!schema) {
     return undefined;
   }
@@ -48,12 +48,21 @@ export function parseSchema(
     if (parsed === undefined) {
       throw new BadRequestError({userMessage: `${errorPrefix} must be an object`});
     }
-    return Object.entries(parsed).map(([k, v]) =>
-      parseSchema(
-        v,
-        schema.properties[k] as Schema,
-        parameterName === undefined ? k : `${parameterName}.${k}`
-      )
+    // Check for extra keys
+    for (const key of Object.keys(parsed)) {
+      if (!(key in schema.properties)) {
+        throw new BadRequestError({
+          userMessage: `Unexpected key ${key} on ${parameterName ?? 'body'}`,
+        });
+      }
+    }
+    return Object.fromEntries(
+      Object.entries(schema.properties).map(([k, schema]) => {
+        return [
+          k,
+          parseSchema(parsed[k], schema, parameterName === undefined ? k : `${parameterName}.${k}`),
+        ];
+      })
     );
   }
 

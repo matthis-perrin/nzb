@@ -2,6 +2,7 @@ interface SchemaBase {
   description?: string;
 }
 
+/* eslint-disable @typescript-eslint/naming-convention */
 interface StringSchema extends SchemaBase {
   type: 'String';
   optional: false;
@@ -85,6 +86,7 @@ interface OptArraySchema<T extends Schema> extends SchemaBase {
 export function OptArr<T extends Schema>(schema: T): OptArraySchema<T> {
   return {type: 'Array', items: schema, optional: true};
 }
+/* eslint-enable @typescript-eslint/naming-convention */
 
 export type Schema =
   | StringSchema
@@ -98,7 +100,7 @@ export type Schema =
   | ObjectSchema<Record<string, Schema>>
   | OptObjectSchema<Record<string, Schema>>;
 
-export type SchemaToInterface<T extends Schema> = T extends StringSchema
+export type SchemaToType<T extends Schema> = T extends StringSchema
   ? string
   : T extends OptStringSchema
   ? string | undefined
@@ -111,17 +113,17 @@ export type SchemaToInterface<T extends Schema> = T extends StringSchema
   : T extends OptBooleanSchema
   ? boolean | undefined
   : T extends ArraySchema<infer Item>
-  ? SchemaToInterface<Item>[]
+  ? SchemaToType<Item>[]
   : T extends OptArraySchema<infer Item>
-  ? SchemaToInterface<Item>[] | undefined
+  ? SchemaToType<Item>[] | undefined
   : T extends ObjectSchema<infer Properties>
   ? {
-      [Key in keyof Properties]: SchemaToInterface<Properties[Key]>;
+      [Key in keyof Properties]: SchemaToType<Properties[Key]>;
     }
   : T extends OptObjectSchema<infer Properties>
   ?
       | {
-          [Key in keyof Properties]: SchemaToInterface<Properties[Key]>;
+          [Key in keyof Properties]: SchemaToType<Properties[Key]>;
         }
       | undefined
   : undefined;

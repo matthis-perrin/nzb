@@ -8,11 +8,13 @@ import {
   OptNum,
   OptObj,
   OptStr,
-  Schema,
+  SchemaToType,
   Str,
-} from '@shared/api/api_schema';
+} from '@shared/api/core/api_schema';
+import {ApiConfig, ApiName} from '@shared/api/core/api_types';
+import {NZB_BACKEND_FUNCTION_URL} from '@shared/env';
 
-const Test = Obj({
+const TestSchema = Obj({
   test1: Str(),
   test2: Num(),
   test3: Bool(),
@@ -33,6 +35,8 @@ const Test = Obj({
   ),
 });
 
+export type Test = SchemaToType<typeof TestSchema>;
+
 export const ALL = {
   backend: {
     '/me': {
@@ -45,12 +49,31 @@ export const ALL = {
         }),
       },
     },
+    '/me2': {
+      GET: {
+        req: Obj({
+          test3: Num(),
+        }),
+        res: Obj({
+          test4: Str(),
+        }),
+      },
+    },
   },
   test: {
     '/foo': {
       GET: {
-        res: Test,
+        res: TestSchema,
       },
     },
   },
 } satisfies AllApiSchema;
+
+export const API_CONFIGS = {
+  backend: {
+    host: NZB_BACKEND_FUNCTION_URL,
+  },
+  test: {
+    host: '',
+  },
+} satisfies Record<ApiName, ApiConfig>;
