@@ -15,18 +15,18 @@
   },
   "prettier": "@matthis/prettier-config",
   "devDependencies": {
-    "@matthis/eslint-config-lib": "1.2.6",
-    "@matthis/eslint-config-node": "1.2.6",
-    "@matthis/eslint-config-web": "1.2.6",
+    "@matthis/eslint-config-lib": "1.2.7",
+    "@matthis/eslint-config-node": "1.2.7",
+    "@matthis/eslint-config-web": "1.2.7",
     "@matthis/prettier-config": "1.2.0",
     "@matthis/tsconfig-lib": "1.2.6",
     "@matthis/tsconfig-node": "1.2.6",
     "@matthis/tsconfig-web": "1.2.6",
-    "@matthis/webpack-lambda": "1.3.1",
-    "@matthis/webpack-lib": "1.3.1",
-    "@matthis/webpack-node-script": "1.3.1",
-    "@matthis/webpack-runner": "1.2.0",
-    "@matthis/webpack-web": "1.3.1",
+    "@matthis/webpack-lambda": "1.3.2",
+    "@matthis/webpack-lib": "1.3.2",
+    "@matthis/webpack-node-script": "1.3.2",
+    "@matthis/webpack-runner": "1.2.1",
+    "@matthis/webpack-web": "1.3.2",
     "typescript": "5.0.4"
   }
 }

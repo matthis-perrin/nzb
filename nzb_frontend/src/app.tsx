@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useState} from 'react';
-import styled from 'styled-components';
+import {styled} from 'styled-components';
 
 import {apiBackend} from '@src/api';
 

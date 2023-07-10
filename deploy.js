@@ -50,7 +50,7 @@ async function run() {
   const projects = getProjects();
   const lambdaProjects = projects.map(p => p.lambdaName).filter(Boolean);
   for (const lambdaName of lambdaProjects) {
-    const lambdaUrl = outputs[`${lambdaName}_function_url`];
+    const lambdaUrl = outputs[`${lambdaName}_function_url`] ?? '';
     console.log(`Deploying lambda ${lambdaName}`, lambdaUrl);
     const tmp = tmpdir();
     const zipPath = join(tmp, randomUUID()) + '.zip';
